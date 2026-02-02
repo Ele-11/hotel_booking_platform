@@ -1,0 +1,242 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")  //  这个需要我们本地配置好 在 .env.example 中
+}
+
+// 用户表
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String    @unique
+  password     String
+  fullName     String
+  phone        String?
+  avatar       String?
+  role         UserRole  @default(customer)
+  status       UserStatus @default(active)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // 关联关系
+  hotels      Hotel[]    @relation("HotelOwner")
+  bookings    Booking[]
+  refreshToken RefreshToken[]
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+}
+
+// 商户额外信息
+model Merchant {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  companyName     String
+  businessLicense String?
+  taxId           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// 酒店表
+model Hotel {
+  id            String       @id @default(uuid())
+  name          String
+  englishName   String?
+  description   String
+  starRating    Int          // 1-5星
+  address       String
+  city          String
+  country       String
+  latitude      Float?
+  longitude     Float?
+  contactPhone  String
+  contactEmail  String
+  checkInTime   String       @default("14:00")
+  checkOutTime  String       @default("12:00")
+  amenities     String[]     // 酒店设施
+  images        String[]     // 图片URL数组
+  status        HotelStatus  @default(draft)
+  ownerId       String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // 关联关系
+  owner        User          @relation("HotelOwner", fields: [ownerId], references: [id])
+  roomTypes    RoomType[]
+  pricePlans   PricePlan[]
+  nearbyAttractions NearbyAttraction[]
+  bookings     Booking[]
+
+  @@index([ownerId])
+  @@index([city])
+  @@index([starRating])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 房型表
+model RoomType {
+  id          String   @id @default(uuid())
+  hotelId     String
+  name        String
+  description String?
+  capacity    Int      // 可住人数
+  bedType     String   // 床型
+  area        Float?   // 面积（平方米）
+  amenities   String[] // 房间设施
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联关系
+  hotel      Hotel     @relation(fields: [hotelId], references: [id])
+  pricePlans PricePlan[]
+  bookings   Booking[]
+
+  @@index([hotelId])
+}
+
+// 价格方案表
+model PricePlan {
+  id         String   @id @default(uuid())
+  roomTypeId String
+  price      Int      // 价格（分）
+  currency   String   @default("CNY")
+  discount   Float?   // 折扣率
+  startDate  DateTime? // 优惠开始时间
+  endDate    DateTime? // 优惠结束时间
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // 关联关系
+  roomType  RoomType  @relation(fields: [roomTypeId], references: [id])
+
+  @@index([roomTypeId])
+  @@index([isActive])
+  @@index([startDate, endDate])
+}
+
+// 附近景点表
+model NearbyAttraction {
+  id          String   @id @default(uuid())
+  hotelId     String
+  name        String
+  type        AttractionType
+  distance    Int      // 距离（米）
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联关系
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+
+  @@index([hotelId])
+  @@index([type])
+}
+
+// 预订表
+model Booking {
+  id              String        @id @default(uuid())
+  userId          String
+  hotelId         String
+  roomTypeId      String
+  checkInDate     DateTime
+  checkOutDate    DateTime
+  guests          Int
+  totalPrice      Int           // 总价（分）
+  currency        String        @default("CNY")
+  specialRequests String?
+  status          BookingStatus @default(pending)
+  paymentStatus   PaymentStatus @default(pending)
+  paymentMethod   PaymentMethod?
+  paymentId       String?
+  cancellationReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // 关联关系
+  user     User     @relation(fields: [userId], references: [id])
+  hotel    Hotel    @relation(fields: [hotelId], references: [id])
+  roomType RoomType @relation(fields: [roomTypeId], references: [id])
+
+  @@index([userId])
+  @@index([hotelId])
+  @@index([roomTypeId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// 刷新令牌表
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// 枚举类型定义
+enum UserRole {
+  admin
+  merchant
+  customer
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+enum HotelStatus {
+  draft
+  published
+  archived
+  under_review
+}
+
+enum AttractionType {
+  attraction
+  shopping
+  transportation
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  checked_in
+  checked_out
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  refunded
+  failed
+}
+
+enum PaymentMethod {
+  credit_card
+  alipay
+  wechat_pay
+  cash
+}
