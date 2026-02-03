@@ -1,11 +1,23 @@
+// @ts-nocheck
+import { Routes, Route } from 'react-router-dom';
+import MHotel from './views/hotel/merchantHotel';
+import Login from './views/login';
 
-
-const App = () => {
+const App: FC = () => {
   return (
-    <div>
-      这是 pc端的 app
-    </div>
-  )
-}
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/merchant/hotel" element={<MHotel />} />
+      <Route
+        path="*"
+        element={
+          <div>
+            页面不存在，<a href="/login">返回登录</a>
+          </div>
+        }
+      />
+    </Routes>
+  );
+};
 
-export default App
+export default App;
