@@ -1,6 +1,7 @@
-import { authAPI } from "@/api/auth";
-import { ILoginRequest, ILoginResponse, IUser } from "@hotel-booking-platform/shared-types";
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ApiError } from '@hotel-booking-platform/shared-types/src';
+import { ILoginRequest, ILoginResponse, IUser } from '@hotel-booking-platform/shared-types/src';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { authAPI } from '@/api/auth';
 
 interface AuthState {
   user: IUser | null;
@@ -11,42 +12,44 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem("token"),
+  token: localStorage.getItem('token'),
   loading: false,
   error: null,
 };
 
 // 异步 thunks
 export const login = createAsyncThunk(
-  "auth/login",
+  'auth/login',
   async (credentials: ILoginRequest, { rejectWithValue }) => {
     try {
       const response = await authAPI.login(credentials);
-      localStorage.setItem("token", response.accessToken);
+      localStorage.setItem('token', response.accessToken);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "登录失败");
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || '登录失败');
     }
   }
 );
 
-export const logout = createAsyncThunk("auth/logout", async () => {
-  localStorage.removeItem("token");
+export const logout = createAsyncThunk('auth/logout', async () => {
+  localStorage.removeItem('token');
 });
 
 export const fetchCurrentUser = createAsyncThunk(
-  "auth/fetchCurrentUser",
+  'auth/fetchCurrentUser',
   async (_, { rejectWithValue }) => {
     try {
       return await authAPI.getCurrentUser();
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "获取用户信息失败");
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || '获取用户信息失败');
     }
   }
 );
 
 const authSlice = createSlice({
-  name: "auth",
+  name: 'auth',
   initialState,
   reducers: {
     clearError: (state) => {
@@ -86,7 +89,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.token = null;
-        localStorage.removeItem("token");
+        localStorage.removeItem('token');
       });
   },
 });
