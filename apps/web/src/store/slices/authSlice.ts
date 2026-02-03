@@ -1,7 +1,6 @@
-import { ApiError } from '@hotel-booking-platform/shared-types/src';
-import { ILoginRequest, ILoginResponse, IUser } from '@hotel-booking-platform/shared-types/src';
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { authAPI } from '@/api/auth';
+import { ApiError, ILoginRequest, ILoginResponse, IUser } from '@hotel-booking-platform/shared-types/src';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AuthState {
   user: IUser | null;
