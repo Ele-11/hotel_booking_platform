@@ -1,13 +1,13 @@
 // @ts-nocheck
 import { Routes, Route } from 'react-router-dom';
-import MHotel from './views/hotel/merchantHotel';
+import LayoutHotel from './views/hotel/merchantHotel/layout';
 import Login from './views/login';
 
 const App: FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/merchant/hotel" element={<MHotel />} />
+      <Route path="/merchant" element={<LayoutHotel />} />
       <Route
         path="*"
         element={
