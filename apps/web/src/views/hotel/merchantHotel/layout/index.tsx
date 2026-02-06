@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { Layout, Menu, Popconfirm } from 'antd';
 import { FC, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { HomeIcon, MenuIcon, LogoutIcon } from '@/components/ui/icon';
+import { HomeIcon, MenuIcon, LogoutIcon, AddIcon } from '@/components/ui/icon';
 import { Theme } from '@/components/ui/theme';
 
 const { Header, Sider, Content } = Layout;
@@ -16,11 +15,12 @@ const LayoutHotel: FC = () => {
     {
       label: '首页',
       key: '/',
-      icon: <HomeIcon style={{ color: selectedKeys[0] === '/merchant' ? '#3b82f6' : 'inherit' }} />,
+      icon: <HomeIcon />,
     },
     { label: '信息管理', key: '/merchant/list', icon: <MenuIcon /> },
+    { label: '新增酒店', key: '/merchant/add', icon: <AddIcon /> },
   ];
-  const onMenuClick = (key) => {
+  const onMenuClick = (key: string) => {
     console.log('菜单被点击了', key);
     navigate(key);
   };
@@ -57,7 +57,7 @@ const LayoutHotel: FC = () => {
             mode="inline"
             selectedKeys={selectedKeys}
             items={items}
-            onClick={onMenuClick}
+            onClick={({ key }) => onMenuClick(key)}
             className="h-full border-0 bg-transparent text-heading-2"
           ></Menu>
         </Sider>

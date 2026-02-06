@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   UserAddOutlined,
   LockOutlined,
@@ -7,7 +6,7 @@ import {
   ArrowRightOutlined,
 } from '@ant-design/icons';
 import { Form, Card, Input, Button, Checkbox, Radio } from 'antd';
-import { FC, ReactNode, useState, useCallback } from 'react';
+import { FC, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Login: FC = () => {
