@@ -1,18 +1,30 @@
 // @ts-nocheck
 import { Layout, Menu, Popconfirm } from 'antd';
 import { FC, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { HomeIcon, MenuIcon, LogoutIcon } from '@/components/ui/icon';
 import { Theme } from '@/components/ui/theme';
-const { Header, Sider, Content } = Layout;
 
-const items = [
-  { label: '首页', key: '/', icon: <HomeIcon /> },
-  { label: '信息管理', key: '/channel', icon: <MenuIcon /> },
-];
+const { Header, Sider, Content } = Layout;
 
 const LayoutHotel: FC = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const selectedKeys = [location.pathname];
+  const navigate = useNavigate();
+
+  const items = [
+    {
+      label: '首页',
+      key: '/',
+      icon: <HomeIcon style={{ color: selectedKeys[0] === '/merchant' ? '#3b82f6' : 'inherit' }} />,
+    },
+    { label: '信息管理', key: '/merchant/list', icon: <MenuIcon /> },
+  ];
+  const onMenuClick = (key) => {
+    console.log('菜单被点击了', key);
+    navigate(key);
+  };
+
   return (
     <Layout className="h-screen bg-body text-heading-2">
       <Header className="bg-box-bg border-b border-box-border shadow-box-sd px-6 py-0 flex items-center justify-between">
@@ -39,17 +51,17 @@ const LayoutHotel: FC = () => {
           onCollapse={(value) => setCollapsed(value)}
           className="!bg-box-bg !border-r border-box-border transition-all duration-300"
           width={200}
-          collapsedWidth={80}
           style={{ minHeight: 'calc(100vh - 64px)' }}
         >
           <Menu
             mode="inline"
-            // selectedKeys={[selectedKey]}
+            selectedKeys={selectedKeys}
             items={items}
-            // onClick={onMenuClick}
+            onClick={onMenuClick}
             className="h-full border-0 bg-transparent text-heading-2"
           ></Menu>
         </Sider>
+
         <Content className="bg-body p-6">
           <div className="bg-box-bg rounded-lg shadow-box-sd p-6 min-h-[calc(100vh-180px)]">
             <Outlet />

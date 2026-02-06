@@ -1,9 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { RouteObject } from 'react-router-dom';
 const Login = lazy(() => import('@/views/login'));
+import HotelInfo from '@/views/hotel/merchantHotel/HotelInfo';
 import Layout from '@/views/hotel/merchantHotel/layout';
-const MHotel = lazy(() => import('@/views/hotel/merchantHotel'));
-
 const routes: RouteObject[] = [
   {
     path: '/login',
@@ -14,10 +13,18 @@ const routes: RouteObject[] = [
     element: <Layout />,
     children: [
       {
+        path: '/',
+        element: (
+          <Suspense fallback={'加载中...'}>
+            <HotelInfo />
+          </Suspense>
+        ),
+      },
+      {
         path: 'list',
         element: (
           <Suspense fallback={'加载中...'}>
-            <MHotel />
+            <HotelInfo />
           </Suspense>
         ),
       },

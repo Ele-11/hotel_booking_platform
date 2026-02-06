@@ -9,12 +9,11 @@
     --success-color: #22c55e;
     --warning-color: #f59e0b;
     --danger-color: #ef4444;
-    /* 你的自定义主题变量（亮色）- 保留原配置 */
     --color-bg: 255 255 255;
     --color-box: 255 255 255;
     --box-border: 229 231 235;
     --box-sd: 226 232 240 / 0.5;
-    --heading-1: 23 37 84;
+    --heading-1: 59 130 246;
     --heading-2: 31 41 55;
     --heading-3: 107 114 128;
   }
@@ -25,7 +24,7 @@
     --color-box: 17 24 39;
     --box-border: 243 244 246 / 0.1;
     --box-sd: transparent;
-    --heading-1: 255 255 255;
+    --heading-1: 59 130 246;
     --heading-2: 243 244 246;
     --heading-3: 209 213 219;
   }
