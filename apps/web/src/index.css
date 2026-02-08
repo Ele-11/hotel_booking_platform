@@ -16,9 +16,11 @@
     --heading-1: 59 130 246;
     --heading-2: 31 41 55;
     --heading-3: 107 114 128;
+    --star-color: #ffb800;
+    --star-hover-color: #ffa800;
+    --star-empty-color: #d9d9d9;
   }
 
-  /* 暗黑模式变量 - 保留原配置，加作用域确保优先级 */
   html.dark {
     --color-bg: 3 7 18;
     --color-box: 17 24 39;
@@ -27,6 +29,9 @@
     --heading-1: 59 130 246;
     --heading-2: 243 244 246;
     --heading-3: 209 213 219;
+    --star-color: #fbbf24;
+    --star-hover-color: #f59e0b;
+    --star-empty-color: #4b5563;
   }
 
   html {
@@ -81,7 +86,6 @@
 }
 
 @layer components {
-  /* 保留你所有自定义组件样式 - 仅适配CSS变量 */
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 
            focus:outline-none focus:ring-2 focus:ring-offset-2 
@@ -161,10 +165,51 @@
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-heading-2;
   }
+  .hotel-star-container {
+    @apply inline-block;
+  }
+  .hotel-star {
+    font-size: 18px !important;
+  }
+  .star-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+  }
+  .star-empty {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #d9d9d9;
+    display: block;
+  }
+  .star-filled {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #ffb800;
+    display: none;
+  }
+  .hotel-star-container .ant-rate-star-full .star-filled {
+    display: block;
+  }
+  .hotel-star-container .ant-rate-star-full .star-empty {
+    display: none;
+  }
+  .hotel-star-container .ant-rate-star-hover .star-filled {
+    display: block !important;
+    color: #ffa800 !important;
+  }
+  .hotel-star-container .ant-rate-star-hover .star-empty {
+    display: none !important;
+  }
+  .hotel-star-tip {
+    @apply block text-xs text-warning-500 mt-1 font-normal;
+  }
 }
 
 @layer utilities {
-  /* 保留你所有自定义工具类 - 合并为一个layer，无重复 */
   .text-balance {
     text-wrap: balance;
   }
@@ -176,7 +221,6 @@
     display: none;
   }
 
-  /* 你的核心主题工具类 - 保留原命名 */
   .bg-body {
     background-color: rgb(var(--color-bg));
   }
@@ -198,9 +242,20 @@
   .text-heading-3 {
     color: rgb(var(--heading-3)) !important;
   }
+  .text-star {
+    color: var(--star-color) !important;
+  }
+  .text-star-hover {
+    color: var(--star-hover-color) !important;
+  }
+  .text-star-empty {
+    color: var(--star-empty-color) !important;
+  }
+  .bg-star {
+    background-color: var(--star-color) !important;
+  }
 }
 
-/* 全局过渡 - 让所有元素跟随主题丝滑切换 */
 * {
   box-sizing: border-box;
   margin: 0;
