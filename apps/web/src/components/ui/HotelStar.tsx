@@ -48,7 +48,7 @@ const HotelStar: FC<HotelStarProps> = ({
           className="hotel-star"
         />
       </Tooltip>
-      {required && validValue === 0 && <Text className="hotel-star-tip">请选择酒店星级</Text>}
+      {/* {required && validValue === 0 && <Text className="hotel-star-tip">请选择酒店星级</Text>} */}
     </div>
   );
 };
