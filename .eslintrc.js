@@ -1,53 +1,57 @@
 module.exports = {
   root: true,
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'prettier',
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "prettier"
   ],
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'react', 'import'],
+  parser: "@typescript-eslint/parser",
+  plugins: ["@typescript-eslint", "react", "import"],
   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
+    ecmaVersion: "latest",
+    sourceType: "module",
     ecmaFeatures: {
-      jsx: true,
-    },
+      jsx: true
+    }
   },
   rules: {
-    'import/order': [
-      'error',
+    "import/order": [
+      "error",
       {
-        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-        'newlines-between': 'never',
-        alphabetize: {
-          order: 'asc',
-          caseInsensitive: true,
-        },
-      },
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
     ],
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-    'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'off',
-    'import/no-unresolved': 'off',
-    'jsx-quotes': ['warn', 'prefer-double'],
-    '@typescript-eslint/no-unused-type-literals': 'off',
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off"
   },
   settings: {
     react: {
-      version: 'detect',
+      version: "detect"
     },
-    'import/resolver': {
+    "import/resolver": {
       typescript: {
-        project: './tsconfig.json',
-      },
-    },
+        project: "./tsconfig.json"
+      }
+    }
   },
   env: {
     browser: true,
     node: true,
-    es6: true,
-  },
+    es6: true
+  }
 };
