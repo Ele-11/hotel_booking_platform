@@ -1,5 +1,5 @@
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Space, Button, Popconfirm, Table } from 'antd';
+import { Space, Button, Popconfirm, Table, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { FC, useState } from 'react';
 import Theme from '@/components/ui/theme';
@@ -32,7 +32,7 @@ const HotelInfo: FC = () => {
             <Popconfirm
               title="删除"
               description="确认是否删除该频道？"
-              // onConfirm={}
+              // onConfirm={() => { onConfirm(record)}}
               okText="Yes"
               cancelText="No"
             >
@@ -63,6 +63,10 @@ const HotelInfo: FC = () => {
       openingDate: '开业时间2',
     },
   ];
+
+  // const onConfirm = (data:any) => {
+  //   message.success('删除成功')
+  // }
   return (
     <div style={{ padding: '2rem', fontSize: '1.2rem', color: '#333' }}>
       {/* <h1>商家酒店管理页面</h1> */}

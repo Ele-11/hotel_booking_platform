@@ -10,7 +10,6 @@ interface HotelStarProps {
   placeholder?: string;
   required?: boolean;
 }
-
 const HotelStar: FC<HotelStarProps> = ({
   value = 0,
   onChange = () => {},

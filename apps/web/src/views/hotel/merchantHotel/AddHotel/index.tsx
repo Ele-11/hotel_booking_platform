@@ -7,10 +7,17 @@ import {
   RadioChangeEvent,
   DatePicker,
   Space,
-  Select,
+  Checkbox,
   InputNumber,
 } from 'antd';
-import type { UploadFile, UploadProps, DatePickerProps } from 'antd';
+import type {
+  UploadFile,
+  UploadProps,
+  DatePickerProps,
+  InputNumberProps,
+  CheckboxOptionType,
+  GetProp,
+} from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import { FC, useState } from 'react';
@@ -21,7 +28,7 @@ interface HotelFormData {
   address: string;
   star: number;
   type: number;
-  roomTypes: string;
+  roomTypes: string[];
   minPrice: number;
   maxPrice: number;
   openingDate: string;
@@ -40,6 +47,24 @@ const AddHotel: FC = () => {
   const [type, setType] = useState<number>(0);
   const [imageList, setImageList] = useState<UploadFile<UploadResponse>[]>([]);
 
+  const priceInputProps: InputNumberProps<number> = {
+    min: 0,
+    max: 9999,
+    precision: 0,
+    formatter: (value) => `${value}`,
+    parser: (value) => {
+      if (!value) return 0;
+      const numStr = value.replace(/\D/g, '');
+      return Math.min(Math.max(Number(numStr) || 0, 0), 9999);
+    },
+  };
+
+  const options: CheckboxOptionType<string>[] = [
+    { label: '单人间', value: '单人间', className: 'label-1' },
+    { label: '双人间', value: '双人间', className: 'label-2' },
+    { label: '大床房', value: '大床房', className: 'label-3' },
+    { label: '套房', value: '套房', className: 'label-4' },
+  ];
   const handleUploadChange: UploadProps<UploadResponse>['onChange'] = ({ fileList }) => {
     const validFileList = fileList.filter((file) => file.status === 'done');
     setImageList(validFileList);
@@ -86,12 +111,13 @@ const AddHotel: FC = () => {
   const onChange: DatePickerProps['onChange'] = (date, dateString) => {
     console.log(date, dateString);
   };
-  const handleChange = (value: string) => {
-    console.log(`selected ${value}`);
+  const handleChange: GetProp<typeof Checkbox.Group, 'onChange'> = (checkedValues) => {
+    console.log('checked = ', checkedValues);
   };
+
   dayjs.locale('zh-cn');
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 p-8 max-w-3xl mx-auto">
       <Form<HotelFormData>
         className="w-full max-w-2xl"
         onFinish={handleFormSubmit}
@@ -147,69 +173,46 @@ const AddHotel: FC = () => {
           )}
         </Form.Item>
         <Form.Item label="房型">
-          <Select
-            defaultValue="单人间"
-            onChange={handleChange}
-            options={[
-              { value: '单人间', label: '单人间' },
-              { value: '双人间', label: '双人间' },
-              { value: '大床房', label: '大床房' },
-              { value: '套房', label: '套房' },
-            ]}
-          />
+          <Checkbox.Group defaultValue={['单人间']} onChange={handleChange} options={options} />
         </Form.Item>
-        <Form.Item label="价格区间">
-          <Space.Compact>
-            <Form.Item
-              name="minPrice"
-              rules={[{ required: true, message: '请输入最低价' }]}
-              noStyle
-            >
-              <InputNumber<number>
-                placeholder="最低价"
-                min={0}
-                max={9999}
-                formatter={(value) => `${value}元`}
-                parser={(value) => {
-                  if (!value) return 0;
-                  const numStr = value.replace(/\s?元/g, '');
-                  const num = Number(numStr) || 0;
-                  return Math.min(Math.max(num, 0), 9999);
-                }}
-              />
-            </Form.Item>
-            <Form.Item
-              name="maxPrice"
-              rules={[
-                { required: true, message: '请输入最高价' },
-                ({ getFieldValue }) => ({
-                  dependencies: ['minPrice'],
-                  validator() {
-                    const minPrice = getFieldValue('minPrice');
-                    const maxPrice = getFieldValue('maxPrice');
-                    if (minPrice && maxPrice && minPrice > maxPrice) {
-                      return Promise.reject(new Error('最低价不能高于最高价'));
-                    }
-                    return Promise.resolve();
-                  },
-                }),
-              ]}
-              noStyle
-            >
-              <InputNumber<number>
-                placeholder="最高价"
-                min={0}
-                max={9999}
-                formatter={(value) => `${value}元`}
-                parser={(value) => {
-                  if (!value) return 0;
-                  const numStr = value.replace(/\s?元/g, '');
-                  const num = Number(numStr) || 0;
-                  return Math.min(Math.max(num, 0), 9999);
-                }}
-              />
-            </Form.Item>
-          </Space.Compact>
+        <Form.Item label="价格区间" className="mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center">
+              <Form.Item
+                name="minPrice"
+                rules={[{ required: true, message: '请输入最低价' }]}
+                noStyle
+              >
+                <InputNumber<number> {...priceInputProps} placeholder="0" className="w-24" />
+              </Form.Item>
+              <span className="text-sm text-gray-500 ml-2">元</span>
+            </div>
+
+            <span className="text-gray-400">-</span>
+            <div className="flex items-center">
+              <Form.Item
+                name="maxPrice"
+                rules={[
+                  { required: true, message: '请输入最高价' },
+                  ({ getFieldValue }) => ({
+                    dependencies: ['minPrice'],
+                    validator() {
+                      const min = getFieldValue('minPrice');
+                      const max = getFieldValue('maxPrice');
+                      if (min && max && min > max) {
+                        return Promise.reject(new Error('最低价不能高于最高价'));
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
+                ]}
+                noStyle
+              >
+                <InputNumber<number> {...priceInputProps} placeholder="9999" className="w-28" />
+              </Form.Item>
+              <span className="text-sm text-gray-500 ml-2">元</span>
+            </div>
+          </div>
         </Form.Item>
         <Form.Item label="开业时间">
           <Space vertical>
