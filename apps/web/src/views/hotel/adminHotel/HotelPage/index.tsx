@@ -1,6 +1,6 @@
 import { FC, useMemo, useState } from 'react';
 
-type HotelStatus = 'pending' | 'approved' | 'rejected' | 'published' | 'offline';
+type HotelStatus = 'published' | 'offline';
 
 interface Hotel {
   id: number;
@@ -15,9 +15,6 @@ interface Hotel {
 }
 
 const statusLabelMap: Record<HotelStatus, string> = {
-  pending: '待审核',
-  approved: '审核通过',
-  rejected: '审核拒绝',
   published: '上架',
   offline: '下架',
 };
@@ -59,7 +56,7 @@ const mockHotels: Hotel[] = [
     merchant: '商家 D',
     city: '杭州',
     address: '西湖区文三路 18 号',
-    status: 'rejected',
+    status: 'offline',
     submitTime: '2026-02-12 16:45:00',
     updateTime: '2026-02-13 17:10:00',
   },
@@ -89,6 +86,7 @@ const HotelPage: FC = () => {
           nameKeyword.trim() === '' || row.name.toLowerCase().includes(nameKeyword.toLowerCase());
         const matchMerchant = merchantKeyword === '' || row.merchant === merchantKeyword;
         const matchStatus = statusFilter === 'all' ? true : row.status === statusFilter;
+
         return matchId && matchName && matchMerchant && matchStatus;
       }),
     [data, idKeyword, nameKeyword, merchantKeyword, statusFilter]
@@ -117,7 +115,7 @@ const HotelPage: FC = () => {
     }
     setData((prev) =>
       prev.map((row) =>
-        selectedIds.includes(row.id) && (row.status === 'approved' || row.status === 'offline')
+        selectedIds.includes(row.id) && row.status === 'offline'
           ? { ...row, status: 'published' }
           : row
       )
@@ -143,9 +141,7 @@ const HotelPage: FC = () => {
   const handleRowPublish = (id: number) => {
     setData((prev) =>
       prev.map((row) =>
-        row.id === id && (row.status === 'approved' || row.status === 'offline')
-          ? { ...row, status: 'published' }
-          : row
+        row.id === id && row.status === 'offline' ? { ...row, status: 'published' } : row
       )
     );
   };
@@ -168,7 +164,7 @@ const HotelPage: FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <section className="rounded-lg border border-box-border bg-muted/40 px-4 py-3 text-xs">
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-muted whitespace-nowrap">酒店ID：</span>
             <input
@@ -220,7 +216,7 @@ const HotelPage: FC = () => {
 
           <div className="ml-auto flex gap-2">
             <button
-              className="h-8 rounded bg-primary px-4 text-xs text-white hover:bg-primary/90"
+              className="h-8 rounded bg-blue-500 px-4 text-xs text-white hover:bg-blue-600"
               onClick={() => {}}
             >
               搜索
@@ -237,13 +233,13 @@ const HotelPage: FC = () => {
         <div className="mt-4 flex gap-3">
           <button
             className="h-8 rounded bg-blue-500 px-4 text-xs text-white hover:bg-blue-600"
-            onClick={() => batchPublish()}
+            onClick={batchPublish}
           >
             批量上架
           </button>
           <button
-            className="h-8 rounded bg-blue-500 px-4 text-xs text-white hover:bg-red-600"
-            onClick={() => batchOffline()}
+            className="h-8 rounded bg-red-500 px-4 text-xs text-white hover:bg-red-600"
+            onClick={batchOffline}
           >
             批量下架
           </button>
@@ -298,7 +294,7 @@ const HotelPage: FC = () => {
                     <td className="px-3 py-2 align-top text-muted">{row.auditRemark ?? '-'}</td>
                     <td className="px-3 py-2 align-top">
                       <div className="flex flex-col gap-1 text-[11px] text-blue-600">
-                        {row.status !== 'published' && (
+                        {row.status === 'offline' && (
                           <button
                             className="text-left hover:underline"
                             onClick={() => handleRowPublish(row.id)}
@@ -316,9 +312,9 @@ const HotelPage: FC = () => {
                         )}
                         <button
                           className="text-left hover:underline"
-                          onClick={() => alert('这里可以跳转到审核详情页')}
+                          onClick={() => alert('这里可以跳转到酒店详情页')}
                         >
-                          审核详情
+                          查看详情
                         </button>
                       </div>
                     </td>
