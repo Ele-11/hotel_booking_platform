@@ -151,7 +151,8 @@
     border-color: rgb(var(--box-border));
   }
   .table {
-    @apply min-w-full divide-y divide-box-border;
+    @apply min-w-full divide-y;
+    border-color: rgb(var(--box-border));
   }
   .table-header {
     @apply bg-box-bg;

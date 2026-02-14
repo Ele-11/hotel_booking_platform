@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { RouteObject } from 'react-router-dom';
 const Login = lazy(() => import('@/views/login'));
+import AHotel from '@/views/hotel/adminHotel';
+import LayoutA from '@/views/hotel/adminHotel/layout';
 import AddHotel from '@/views/hotel/merchantHotel/AddHotel';
 import HotelInfo from '@/views/hotel/merchantHotel/HotelInfo';
 import Layout from '@/views/hotel/merchantHotel/layout';
@@ -34,6 +36,20 @@ const routes: RouteObject[] = [
         element: (
           <Suspense fallback={'加载中...'}>
             <AddHotel />
+          </Suspense>
+        ),
+      },
+    ],
+  },
+  {
+    path: '/admin',
+    element: <LayoutA />,
+    children: [
+      {
+        path: '/list',
+        element: (
+          <Suspense fallback={'加载中...'}>
+            <AHotel />
           </Suspense>
         ),
       },
