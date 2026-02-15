@@ -3,6 +3,7 @@ import { RouteObject } from 'react-router-dom';
 const Login = lazy(() => import('@/views/login'));
 import AHotel from '@/views/hotel/adminHotel';
 import HotelAuditPage from '@/views/hotel/adminHotel/HotelAudit';
+import HotelDetailPage from '@/views/hotel/adminHotel/HotelDetail';
 import LayoutA from '@/views/hotel/adminHotel/layout';
 import AddHotel from '@/views/hotel/merchantHotel/AddHotel';
 import HotelInfo from '@/views/hotel/merchantHotel/HotelInfo';
@@ -60,6 +61,14 @@ const routes: RouteObject[] = [
         element: (
           <Suspense fallback={'加载中...'}>
             <HotelAuditPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/detail/:id',
+        element: (
+          <Suspense fallback={'加载中...'}>
+            <HotelDetailPage />
           </Suspense>
         ),
       },

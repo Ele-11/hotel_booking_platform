@@ -3,6 +3,7 @@ import { FC } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAppSelector } from './store/hooks';
 import HotelAuditPage from './views/hotel/adminHotel/HotelAudit';
+import HotelDetailPage from './views/hotel/adminHotel/HotelDetail';
 import HotelPage from './views/hotel/adminHotel/HotelPage';
 import LayoutHotelA from './views/hotel/adminHotel/layout';
 import AddHotel from './views/hotel/merchantHotel/AddHotel';
@@ -26,6 +27,7 @@ const App: FC = () => {
         <Route path="/admin" element={<LayoutHotelA />}>
           <Route path="list" element={<HotelPage />} />
           <Route path="audit" element={<HotelAuditPage />} />
+          <Route path="hotel/:id" element={<HotelDetailPage />} />
         </Route>
         <Route
           path="*"

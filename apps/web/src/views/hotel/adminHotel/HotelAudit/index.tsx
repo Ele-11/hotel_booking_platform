@@ -1,4 +1,5 @@
 import { FC, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type AuditStatus = 'pending' | 'approved' | 'rejected';
 
@@ -39,6 +40,13 @@ const mockAudits: HotelAudit[] = [
   },
   {
     id: 52,
+    name: '阳光海岸度假酒店',
+    merchant: '商家 C',
+    status: 'pending',
+    submitTime: '2025-10-01 09:15:20',
+  },
+  {
+    id: 53,
     name: '城市便捷酒店',
     merchant: '商家 B',
     status: 'rejected',
@@ -50,10 +58,12 @@ const mockAudits: HotelAudit[] = [
 ];
 
 const HotelAuditPage: FC = () => {
+  const navigate = useNavigate();
+
   const [data, setData] = useState<HotelAudit[]>(mockAudits);
   const [idKeyword, setIdKeyword] = useState('');
   const [nameKeyword, setNameKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AuditStatus | 'all'>('pending');
+  const [statusFilter, setStatusFilter] = useState<AuditStatus | 'all'>('all');
 
   const [showAuditModal, setshowAuditModal] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<number | null>(null);
@@ -217,7 +227,7 @@ const HotelAuditPage: FC = () => {
                       <div className="flex flex-col gap-1 text-[11px] text-blue-600">
                         <button
                           className="text-left hover:underline"
-                          onClick={() => alert('这里可以跳转到审核详情/酒店详情页面')}
+                          onClick={() => navigate(`/admin/hotel/${row.id}`)}
                         >
                           查看详情
                         </button>
