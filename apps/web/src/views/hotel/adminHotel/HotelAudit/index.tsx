@@ -121,7 +121,7 @@ const HotelAuditPage: FC = () => {
           ? {
               ...row,
               status: decision,
-              auditor: '管理员', // 作业里可以写死
+              auditor: '管理员',
               auditTime: now,
               auditRemark: remarkInput,
             }

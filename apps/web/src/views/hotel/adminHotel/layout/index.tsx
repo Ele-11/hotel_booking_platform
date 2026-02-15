@@ -1,6 +1,6 @@
 import { Layout, Menu, Popconfirm } from 'antd';
 import { FC, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MenuIcon, LogoutIcon, HomeIcon } from '@/components/ui/icon';
 import { Theme } from '@/components/ui/theme';
 
@@ -8,8 +8,9 @@ const { Header, Sider, Content } = Layout;
 
 const LayoutHotelA: FC = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const selectedKeys = [location.pathname];
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedKeys = [location.pathname];
 
   const items = [
     { label: '酒店管理', key: '/admin/list', icon: <MenuIcon /> },
@@ -44,6 +45,7 @@ const LayoutHotelA: FC = () => {
           collapsible
           collapsed={collapsed}
           onCollapse={(value) => setCollapsed(value)}
+          collapsedWidth={64}
           className="!bg-box-bg !border-r border-box-border transition-all duration-300"
           width={200}
           style={{ minHeight: 'calc(100vh - 64px)' }}
@@ -53,7 +55,8 @@ const LayoutHotelA: FC = () => {
             selectedKeys={selectedKeys}
             items={items}
             onClick={({ key }) => onMenuClick(key)}
-            className="h-full border-0 bg-transparent text-heading-2"
+            inlineCollapsed={collapsed}
+            className="h-full border-0 bg-transparent text-heading-2  [&_.ant-menu-item-selected]:!bg-primary/10"
           ></Menu>
         </Sider>
 
