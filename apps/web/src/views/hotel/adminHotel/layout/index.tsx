@@ -1,7 +1,7 @@
 import { Layout, Menu, Popconfirm } from 'antd';
 import { FC, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { MenuIcon, LogoutIcon } from '@/components/ui/icon';
+import { MenuIcon, LogoutIcon, HomeIcon } from '@/components/ui/icon';
 import { Theme } from '@/components/ui/theme';
 
 const { Header, Sider, Content } = Layout;
@@ -13,7 +13,7 @@ const LayoutHotelA: FC = () => {
 
   const items = [
     { label: '酒店管理', key: '/admin/list', icon: <MenuIcon /> },
-    // { label: '新增酒店', key: '/merchant/add', icon: <AddIcon /> },
+    { label: '审核列表', key: '/admin/audit', icon: <HomeIcon /> },
   ];
   const onMenuClick = (key: string) => {
     console.log('菜单被点击了', key);

@@ -2,6 +2,7 @@ import { ConfigProvider, theme } from 'antd';
 import { FC } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAppSelector } from './store/hooks';
+import HotelAuditPage from './views/hotel/adminHotel/HotelAudit';
 import HotelPage from './views/hotel/adminHotel/HotelPage';
 import LayoutHotelA from './views/hotel/adminHotel/layout';
 import AddHotel from './views/hotel/merchantHotel/AddHotel';
@@ -24,6 +25,7 @@ const App: FC = () => {
         </Route>
         <Route path="/admin" element={<LayoutHotelA />}>
           <Route path="list" element={<HotelPage />} />
+          <Route path="audit" element={<HotelAuditPage />} />
         </Route>
         <Route
           path="*"
