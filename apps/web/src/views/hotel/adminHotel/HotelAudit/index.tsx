@@ -50,10 +50,15 @@ const mockAudits: HotelAudit[] = [
 ];
 
 const HotelAuditPage: FC = () => {
-  const [data] = useState<HotelAudit[]>(mockAudits);
+  const [data, setData] = useState<HotelAudit[]>(mockAudits);
   const [idKeyword, setIdKeyword] = useState('');
   const [nameKeyword, setNameKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AuditStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<AuditStatus | 'all'>('pending');
+
+  const [showAuditModal, setshowAuditModal] = useState(false);
+  const [currentAuditId, setCurrentAuditId] = useState<number | null>(null);
+  const [decision, setDecision] = useState<'approved' | 'rejected'>('approved');
+  const [remarkInput, setRemarkInput] = useState('');
 
   const filteredData = useMemo(
     () =>
@@ -68,10 +73,53 @@ const HotelAuditPage: FC = () => {
     [data, idKeyword, nameKeyword, statusFilter]
   );
 
+  const currentAudit = useMemo(
+    () => data.find((item) => item.id === currentAuditId) ?? null,
+    [data, currentAuditId]
+  );
+
   const handleReset = () => {
     setIdKeyword('');
     setNameKeyword('');
-    setStatusFilter('all');
+    setStatusFilter('pending');
+  };
+
+  const openAuditModal = (row: HotelAudit) => {
+    setCurrentAuditId(row.id);
+    setDecision('approved');
+    setRemarkInput(row.auditRemark ?? '');
+    setshowAuditModal(true);
+  };
+
+  const closeAuditModal = () => {
+    setshowAuditModal(false);
+    setCurrentAuditId(null);
+    setRemarkInput('');
+  };
+
+  const handleConfirmAudit = () => {
+    if (!currentAudit) return;
+    if (!remarkInput.trim()) {
+      alert('请填写审核意见');
+      return;
+    }
+    const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+    setData((prev) =>
+      prev.map((row) =>
+        row.id === currentAudit.id
+          ? {
+              ...row,
+              status: decision,
+              auditor: '管理员', // 作业里可以写死
+              auditTime: now,
+              auditRemark: remarkInput,
+            }
+          : row
+      )
+    );
+
+    closeAuditModal();
   };
 
   return (
@@ -112,18 +160,10 @@ const HotelAuditPage: FC = () => {
             </select>
           </div>
 
-          {/* 这里可以扩展提交时间范围，用日期组件，先留空位 */}
-          {/* <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap text-muted">提交时间：</span>
-            <input className="h-8 w-40 ..." type="date" />
-            <span>→</span>
-            <input className="h-8 w-40 ..." type="date" />
-          </div> */}
-
           <div className="ml-auto flex gap-2">
             <button
               className="h-8 rounded bg-blue-500 px-4 text-xs text-white hover:bg-blue-600"
-              onClick={() => {}}
+              // onClick={() => handleSearch()}
             >
               搜索
             </button>
@@ -174,12 +214,22 @@ const HotelAuditPage: FC = () => {
                     <td className="px-3 py-2 align-top text-muted">{row.auditTime ?? '-'}</td>
                     <td className="px-3 py-2 align-top text-muted">{row.auditRemark ?? '-'}</td>
                     <td className="px-3 py-2 align-top">
-                      <button
-                        className="text-[11px] text-blue-600 hover:underline"
-                        onClick={() => alert('这里可以跳转到审核详情/酒店详情页面')}
-                      >
-                        查看详情
-                      </button>
+                      <div className="flex flex-col gap-1 text-[11px] text-blue-600">
+                        <button
+                          className="text-left hover:underline"
+                          onClick={() => alert('这里可以跳转到审核详情/酒店详情页面')}
+                        >
+                          查看详情
+                        </button>
+                        {row.status === 'pending' && (
+                          <button
+                            className="text-left hover:underline"
+                            onClick={() => openAuditModal(row)}
+                          >
+                            审核
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -188,6 +238,78 @@ const HotelAuditPage: FC = () => {
           </table>
         </div>
       </section>
+      {showAuditModal && currentAudit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="w-full max-w-md rounded-lg bg-box-bg p-4 shadow-lg text-xs">
+            <h3 className="text-sm font-semibold text-heading-1">酒店审核</h3>
+            <p className="mt-1 text-[11px] text-muted">
+              请确认酒店信息，并选择审核结果和填写审核意见。
+            </p>
+            <div className="mt-3 space-y-1 text-[11px] text-heading-2">
+              <div>
+                <span className="text-muted">酒店名称：</span>
+                <span>{currentAudit.name}</span>
+              </div>
+              <div>
+                <span className="text-muted">所属商家：</span>
+                <span>{currentAudit.merchant}</span>
+              </div>
+              <div>
+                <span className="text-muted">提交时间：</span>
+                <span>{currentAudit.submitTime}</span>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="mb-1 text-[11px] text-muted">审核结果</div>
+              <div className="flex gap-4 text-[11px] text-heading-2">
+                <label className="inline-flex items-center gap-1">
+                  <input
+                    type="radio"
+                    value="approved"
+                    checked={decision === 'approved'}
+                    onChange={() => setDecision('approved')}
+                  />
+                  <span>通过</span>
+                </label>
+                <label className="inline-flex items-center gap-1">
+                  <input
+                    type="radio"
+                    value="rejected"
+                    checked={decision === 'rejected'}
+                    onChange={() => setDecision('rejected')}
+                  />
+                  <span>拒绝</span>
+                </label>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="mb-1 text-[11px] text-muted">
+                审核意见<span className="ml-1 text-red-500">*</span>
+              </div>
+              <textarea
+                className="h-24 w-full rounded border border-box-border bg-transparent px-2 py-1 text-[11px] text-heading-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                placeholder="请填写本次审核的结论和原因，例如：资料完整，允许上架 / 图片不清晰，请重新上传等。"
+                value={remarkInput}
+                onChange={(e) => setRemarkInput(e.target.value)}
+              />
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="rounded border border-box-border bg-box-bg px-3 py-1 text-xs text-heading-2 hover:bg-muted/40"
+                onClick={closeAuditModal}
+              >
+                取消
+              </button>
+              <button
+                className="rounded bg-blue-500 px-4 py-1 text-xs text-white hover:bg-blue-600"
+                onClick={handleConfirmAudit}
+              >
+                确认审核
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
