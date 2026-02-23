@@ -3,9 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp dist/index.js dist/index.mjs",
     "dev": "tsc --watch",
     "lint": "eslint src --ext ts --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts --fix",
