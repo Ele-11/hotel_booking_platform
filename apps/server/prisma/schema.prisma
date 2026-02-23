@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,163 +9,136 @@ datasource db {
 
 // 用户表
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  username     String    @unique
-  password     String
-  fullName     String
-  phone        String?
-  avatar       String?
-  role         UserRole  @default(customer)
-  status       UserStatus @default(active)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id           String    @id @default(uuid()) // 主键
+  email        String    @unique              // 邮箱
+  username     String    @unique              // 用户名
+  password     String                         // 密码
+  fullName     String                         // 全名
+  phone        String?                        // 手机号
+  avatar       String?                        // 头像URL
+  role         UserRole  @default(CUSTOMER)   // 用户角色
+  status       UserStatus @default(ACTIVE)    // 用户状态
+  lastLoginAt  DateTime?                      // 最后登录时间
+  createdAt    DateTime  @default(now())      // 创建时间
+  updatedAt    DateTime  @updatedAt           // 更新时间
+  deletedAt    DateTime?                      // 软删除字段
 
   // 关联关系
-  hotels      Hotel[]    @relation("HotelOwner")
-  bookings    Booking[]
-  refreshToken RefreshToken[]
+  hotels      Hotel[]    @relation("HotelOwner")  // 酒店关联关系（一对多关系）
+  merchantInfo Merchant?                          // 商户的额外信息（一对一关系）
+  bookings    Booking[]                           // 订单关联关系（一对多关系）
+  refreshToken RefreshToken[]                     // 刷新令牌关联关系（一对多关系）
 
   @@index([email])
   @@index([username])
   @@index([role])
+  @@index([deletedAt])
 }
 
 // 商户额外信息
 model Merchant {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  companyName     String
-  businessLicense String?
-  taxId           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id              String   @id @default(uuid()) // 主键
+  userId          String   @unique              // 用户ID（唯一）
+  companyName     String                        // 公司名称
+  businessLicense String?                       // 营业执照号
+  taxId           String?                       // 税务识别号
+  createdAt       DateTime @default(now())      // 创建时间
+  updatedAt       DateTime @updatedAt           // 更新时间
+  deletedAt    DateTime?                        // 软删除字段
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id]) // 用户关联关系（一对一关系）
 }
 
 // 酒店表
 model Hotel {
-  id            String       @id @default(uuid())
-  name          String
-  englishName   String?
-  description   String
-  starRating    Int          // 1-5星
-  address       String
-  city          String
-  country       String
-  latitude      Float?
-  longitude     Float?
-  contactPhone  String
-  contactEmail  String
-  checkInTime   String       @default("14:00")
-  checkOutTime  String       @default("12:00")
-  amenities     String[]     // 酒店设施
-  images        String[]     // 图片URL数组
-  status        HotelStatus  @default(draft)
-  ownerId       String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id            String       @id @default(uuid()) // 主键
+  name          String                            // 酒店名称
+  englishName   String?                           // 英文名称
+  description   String                            // 酒店描述
+  starRating    Int                               // 星级（1-5）
+  address       String                            // 酒店地址
+  city          String                            // 城市
+  country       String                            // 国家
+  contactPhone  String                            // 联系电话
+  contactEmail  String                            // 联系邮箱
+  checkInTime   String       @default("14:00")    // 入住时间
+  checkOutTime  String       @default("12:00")    // 退房时间
+  amenities     String[]                          // 酒店设施
+  tags          String[]                          // 酒店标签（如亲子、豪华、免费停车场等）
+  images        String[]                          // 图片URL数组
+  status        HotelStatus  @default(PENDING)    // 酒店状态
+  ownerId       String                            // 酒店所有者ID
+  createdAt     DateTime     @default(now())      // 创建时间
+  updatedAt     DateTime     @updatedAt           // 更新时间
+  deletedAt     DateTime?                         // 软删除时间戳
+  auditReason   String?                           // 审核拒绝原因
+  approvedBy    String?                           // 审核人ID
 
   // 关联关系
-  owner        User          @relation("HotelOwner", fields: [ownerId], references: [id])
-  roomTypes    RoomType[]
-  pricePlans   PricePlan[]
-  nearbyAttractions NearbyAttraction[]
-  bookings     Booking[]
+  owner        User          @relation("HotelOwner", fields: [ownerId], references: [id]) // 所属酒店
+  roomTypes    RoomType[]                                                                 // 房型关联关系（一对多关系）
+  nearbyAttractions NearbyAttraction[]                                                    // 附近景点关联关系（一对多关系）
+  bookings     Booking[]                                                                  // 订单关联关系（一对多关系）
 
   @@index([ownerId])
   @@index([city])
   @@index([starRating])
   @@index([status])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 // 房型表
 model RoomType {
-  id          String   @id @default(uuid())
-  hotelId     String
-  name        String
-  description String?
-  capacity    Int      // 可住人数
-  bedType     String   // 床型
-  area        Float?   // 面积（平方米）
-  amenities   String[] // 房间设施
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())     // 主键
+  hotelId       String                            // 酒店ID
+  name          String                            // 房型名称
+  description   String?                           // 房型描述
+  capacity      Int                               // 可住人数
+  bedType       String                            // 床型
+  area          Float?                            // 面积（平方米）
+  amenities     String[]                          // 房间设施
+  images        String[]                          // 图片URL数组
+  createdAt     DateTime @default(now())          // 创建时间
+  updatedAt     DateTime @updatedAt               // 更新时间
+  deletedAt     DateTime?                         // 软删除字段
+  availableFrom DateTime?                         // 可预订从日期
+  availableTo   DateTime?                         // 可预订到日期
 
   // 关联关系
-  hotel      Hotel     @relation(fields: [hotelId], references: [id])
-  pricePlans PricePlan[]
-  bookings   Booking[]
+  hotel      Hotel     @relation(fields: [hotelId], references: [id]) // 所属酒店
+  pricePlans PricePlan[]                                              // 价格方案关联关系（一对多关系）
+  bookings   Booking[]                                                // 订单关联关系（一对多关系）
 
   @@index([hotelId])
-}
-
-// 价格方案表
-model PricePlan {
-  id         String   @id @default(uuid())
-  roomTypeId String
-  price      Int      // 价格（分）
-  currency   String   @default("CNY")
-  discount   Float?   // 折扣率
-  startDate  DateTime? // 优惠开始时间
-  endDate    DateTime? // 优惠结束时间
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // 关联关系
-  roomType  RoomType  @relation(fields: [roomTypeId], references: [id])
-
-  @@index([roomTypeId])
-  @@index([isActive])
-  @@index([startDate, endDate])
-}
-
-// 附近景点表
-model NearbyAttraction {
-  id          String   @id @default(uuid())
-  hotelId     String
-  name        String
-  type        AttractionType
-  distance    Int      // 距离（米）
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // 关联关系
-  hotel Hotel @relation(fields: [hotelId], references: [id])
-
-  @@index([hotelId])
-  @@index([type])
+  @@index([deletedAt])
 }
 
 // 预订表
 model Booking {
-  id              String        @id @default(uuid())
-  userId          String
-  hotelId         String
-  roomTypeId      String
-  checkInDate     DateTime
-  checkOutDate    DateTime
-  guests          Int
-  totalPrice      Int           // 总价（分）
-  currency        String        @default("CNY")
-  specialRequests String?
-  status          BookingStatus @default(pending)
-  paymentStatus   PaymentStatus @default(pending)
-  paymentMethod   PaymentMethod?
-  paymentId       String?
-  cancellationReason String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id              String        @id @default(uuid()) // 主键
+  userId          String                             // 用户ID
+  hotelId         String                             // 酒店ID
+  roomTypeId      String                             // 房型ID
+  checkInDate     DateTime                           // 入住日期
+  checkOutDate    DateTime                           // 退房日期
+  guests          Int                                // 人数
+  totalPrice      Int                                // 总价（分）
+  currency        String        @default("CNY")      // 货币
+  specialRequests String?                            // 特殊请求 
+  status          BookingStatus @default(PENDING)    // 订单状态
+  paymentStatus   PaymentStatus @default(PENDING)    // 支付状态
+  paymentMethod   PaymentMethod?                     // 支付方式
+  paymentId       String?                            // 第三方支付ID
+  cancellationReason String?                         // 取消原因
+  createdAt       DateTime      @default(now())      // 创建时间
+  updatedAt       DateTime      @updatedAt           // 更新时间
+  deletedAt       DateTime?                          // 软删除字段
 
   // 关联关系
-  user     User     @relation(fields: [userId], references: [id])
-  hotel    Hotel    @relation(fields: [hotelId], references: [id])
-  roomType RoomType @relation(fields: [roomTypeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])     // 所属用户
+  hotel    Hotel    @relation(fields: [hotelId], references: [id])    // 所属酒店
+  roomType RoomType @relation(fields: [roomTypeId], references: [id]) // 所属房型
 
   @@index([userId])
   @@index([hotelId])
@@ -176,67 +146,156 @@ model Booking {
   @@index([status])
   @@index([paymentStatus])
   @@index([createdAt])
+  @@index([deletedAt])
+}
+
+// 价格方案表
+model PricePlan {
+  id         String   @id @default(uuid())    // 主键
+  roomTypeId String                           // 房型ID
+  price      Int                              // 价格（分）
+  currency   String   @default("CNY")         // 货币
+  discount   Float?                           // 折扣率
+  startDate  DateTime?                        // 优惠开始时间
+  endDate    DateTime?                        // 优惠结束时间
+  isActive   Boolean  @default(true)          // 是否激活
+  createdAt  DateTime @default(now())         // 创建时间
+  updatedAt  DateTime @updatedAt              // 更新时间
+  deletedAt  DateTime?                          // 软删除字段
+
+  // 关联关系
+  roomType  RoomType  @relation(fields: [roomTypeId], references: [id]) // 所属房型
+
+  @@index([roomTypeId])
+  @@index([isActive])
+  @@index([startDate, endDate])
+  @@index([deletedAt])
+}
+
+// 附近景点表
+model NearbyAttraction {
+  id          String   @id @default(uuid())   // 主键
+  hotelId     String                          // 酒店ID
+  name        String                          // 景点名称
+  type        AttractionType                  // 景点类型
+  distance    Int                             // 距离（米）
+  description String?                         // 景点描述
+  images      String[]                        // 景点图片URL数组
+  createdAt   DateTime @default(now())        // 创建时间
+  updatedAt   DateTime @updatedAt             // 更新时间
+
+  // 关联关系
+  hotel Hotel @relation(fields: [hotelId], references: [id]) // 所属酒店
+
+  @@index([hotelId])
+  @@index([type])
 }
 
 // 刷新令牌表
 model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(uuid()) // 主键
+  userId    String                        // 用户ID
+  token     String   @unique              // 刷新令牌值
+  expiresAt DateTime                      // 过期时间
+  createdAt DateTime @default(now())      // 创建时间
+  updatedAt DateTime @updatedAt           // 更新时间
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id]) // 所属用户
 
   @@index([userId])
   @@index([expiresAt])
 }
 
+// 轮播图表（广告）
+model Banner {
+  id          String   @id @default(cuid())   // 主键
+  title       String                          // 标题
+  imageUrl    String                          // 图片URL
+  targetUrl   String?                         // 跳转链接
+  position    Int                             // 展示位置权重
+  isActive    Boolean  @default(true)         // 是否激活
+  startDate   DateTime?                       // 展示开始时间
+  endDate     DateTime?                       // 展示结束时间
+  clickCount  Int      @default(0)            // 点击统计
+  createdAt   DateTime @default(now())        // 创建时间
+  updatedAt   DateTime @updatedAt()           // 更新时间
+  deletedAt   DateTime?                       // 软删除字段
+}
+
 // 枚举类型定义
+// 用户角色
 enum UserRole {
-  admin
-  merchant
-  customer
+  ADMIN    // 平台管理员
+  MERCHANT // 商户
+  CUSTOMER // 客户
 }
 
+// 用户状态
 enum UserStatus {
-  active
-  inactive
-  suspended
+  ACTIVE       // 活跃
+  INACTIVE     // 不活跃
+  SUSPENDED    // 暂停（平台管理）
+  DELETED      // 已删除（软删除）
 }
 
+// 商户状态
+enum MerchantStatus {
+  PENDING      // 待审核
+  APPROVED     // 已审核
+  REJECTED     // 已拒绝
+  SUSPENDED    // 暂停（平台管理）
+}
+
+// 酒店状态
 enum HotelStatus {
-  draft
-  published
-  archived
-  under_review
+  PENDING      // 待审核
+  PUBLISHED    // 已发布
+  REJECTED     // 已拒绝
+  UNPUBLISHED  // 未发布（商户主动下架）
+  SUSPENDED    // 暂停（平台管理）
 }
 
-enum AttractionType {
-  attraction
-  shopping
-  transportation
+// 房间状态
+enum RoomStatus {
+  ACTIVE       // 活跃
+  INACTIVE     // 不活跃
+  MAINTENANCE  // 维护中
 }
 
+// 订单状态
 enum BookingStatus {
-  pending
-  confirmed
-  checked_in
-  checked_out
-  cancelled
+  PENDING      // 待确认
+  CONFIRMED    // 已确认
+  CHECKED_IN   // 已入住
+  CHECKED_OUT  // 已退房
+  CANCELLED    // 已取消
+  NO_SHOW      // 未入住
+  COMPLETED    // 已完成
 }
 
+// 支付状态
 enum PaymentStatus {
-  pending
-  paid
-  refunded
-  failed
+  PENDING        // 待支付
+  PAID           // 支付成功
+  REFUNDED       // 退款
+  FAILED         // 失败
+  PARTIAL_REFUND // 部分退款
 }
 
+// 支付方式
 enum PaymentMethod {
-  credit_card
-  alipay
-  wechat_pay
-  cash
+  CREDIT_CARD  // 信用卡
+  ALIPAY       // 支付宝
+  WECHAT_PAY   // 微信支付
+  CASH         // 现金
+}
+
+// 景点类型
+enum AttractionType {
+  SCENIC_SPOT    // 景点
+  RESTAURANT     // 餐厅
+  SHOPPING       // 购物
+  TRANSPORTATION // 交通
+  ENTERTAINMENT  // 娱乐
+  OTHER          // 其他
 }

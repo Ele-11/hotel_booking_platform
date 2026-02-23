@@ -1,8 +1,11 @@
+// NestJS 后端服务的主入口，负责引导NestJS应用的启动和配置
+
 import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-// import helmet from "helmet";
+import helmet from "helmet";
+
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -10,7 +13,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // 安全中间件
-//   app.use(helmet());
+  app.use(helmet());
 
   // 全局验证管道
   app.useGlobalPipes(
