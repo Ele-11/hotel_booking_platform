@@ -7,14 +7,11 @@ import {
   Body,
   Param,
   Delete,
-  ParseUUIDPipe,
   Get,
-  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
-
 import { UploadImageDto } from './dto/upload-image.dto';
 import { HotelsService } from './hotels.service';
 import { ImageUploadService } from './image-upload.service';
@@ -52,8 +49,8 @@ export class ImageUploadController {
   @ApiResponse({ status: 201, description: '图片上传成功' })
   async uploadHotelImage(
     @UploadedFile() file: Express.Multer.File,
-    @Param('hotelId', ParseUUIDPipe) hotelId: string,
-    @Body() body: UploadImageDto,
+    @Param('hotelId') hotelId: string,
+    @Body() body?: UploadImageDto,
   ) {
     const imageUrl = await this.imageUploadService.uploadImage(
       file,
@@ -86,8 +83,8 @@ export class ImageUploadController {
   @ApiResponse({ status: 201, description: '房型图片上传成功' })
   async uploadRoomTypeImage(
     @UploadedFile() file: Express.Multer.File,
-    @Param('roomTypeId', ParseUUIDPipe) roomTypeId: string,
-    @Body() body: UploadImageDto,
+    @Param('roomTypeId') roomTypeId: string,
+    @Body() body?: UploadImageDto,
   ) {
     const imageUrl = await this.imageUploadService.uploadImage(
       file,
@@ -148,7 +145,7 @@ export class ImageUploadController {
   @Get('hotel/:hotelId')
   @ApiOperation({ summary: '获取酒店图片列表' })
   @ApiResponse({ status: 200, description: '返回酒店图片列表' })
-  async getHotelImages(@Param('hotelId', ParseUUIDPipe) hotelId: string) {
+  async getHotelImages(@Param('hotelId') hotelId: string) {
     const hotel = await this.hotelsService.findOne(hotelId);
     return { images: hotel.images || [] };
   }

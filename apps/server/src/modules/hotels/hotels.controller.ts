@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
-
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
@@ -52,7 +51,7 @@ export class HotelsController {
   @ApiQuery({ name: 'guests', required: false, description: '客人数量', example: 2 })
   @ApiResponse({ status: 200, description: '返回房型及价格信息' })
   async getRoomTypes(
-    @Param('id') hotelId: string,
+    @Param('id') hotelId: string, 
     @Query('checkInDate') checkInDate?: string,
     @Query('checkOutDate') checkOutDate?: string,
     @Query('guests') guests?: number,

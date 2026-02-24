@@ -3,10 +3,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-
+import * as bcrypt from 'bcryptjs';
 import { UserService } from '../users/user.service';
-
 import { LoginDto } from './dto/login.dto'; // 导入 LoginDto
 
 // 添加注册用户的数据传输对象接口

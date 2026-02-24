@@ -3,13 +3,9 @@
 import { join } from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ServeStaticModule } from '@nestjs/serve-static';
-
-
-
 import { AuthModule } from "./modules/auth/auth.module";
 import { BannersModule } from "./modules/banners/banners.module";
 import { BookingsModule } from "./modules/bookings/bookings.module";

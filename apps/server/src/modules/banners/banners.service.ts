@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-
 import { PrismaService } from '../../prisma/prisma.service';
-
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { QueryBannerDto } from './dto/query-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';

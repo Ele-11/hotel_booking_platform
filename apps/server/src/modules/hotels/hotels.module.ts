@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-
 import { PrismaService } from '../../prisma/prisma.service';
-
 import { HotelsController } from './hotels.controller';
 import { HotelsService } from './hotels.service';
 

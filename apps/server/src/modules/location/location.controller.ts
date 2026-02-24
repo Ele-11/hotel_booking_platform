@@ -1,7 +1,6 @@
 import { Controller, Get, Query, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import type { Request } from 'express';
-
 import { LocationService } from './location.service';
 
 @ApiTags('Location')

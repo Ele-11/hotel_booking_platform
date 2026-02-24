@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Hotel, User, UserRole, HotelStatus, Prisma } from '@prisma/client';
-
 import { PrismaService } from '../../prisma/prisma.service';
-
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';

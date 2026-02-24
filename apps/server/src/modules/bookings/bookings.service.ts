@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Booking, User, Hotel, RoomType, BookingStatus } from '@prisma/client';
-
 import { PrismaService } from '../../prisma/prisma.service';
 
 interface CreateBookingDto {

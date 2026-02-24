@@ -1,7 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-
 import { PrismaService } from '../../prisma/prisma.service';
 
 // 位置响应接口定义，匹配高德地图 API 的返回结构

@@ -1,10 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
 import { Injectable, HttpException, HttpStatus, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
-
 import { HotelsService } from './hotels.service';
 
 @Injectable()
