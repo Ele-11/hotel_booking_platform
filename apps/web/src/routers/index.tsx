@@ -6,6 +6,7 @@ import HotelAuditPage from '@/views/hotel/adminHotel/HotelAudit';
 import HotelDetailPage from '@/views/hotel/adminHotel/HotelDetail';
 import LayoutA from '@/views/hotel/adminHotel/layout';
 import AddHotel from '@/views/hotel/merchantHotel/AddHotel';
+import Home from '@/views/hotel/merchantHotel/Home';
 import HotelInfo from '@/views/hotel/merchantHotel/HotelInfo';
 import Layout from '@/views/hotel/merchantHotel/layout';
 
@@ -22,7 +23,7 @@ const routes: RouteObject[] = [
         path: '/',
         element: (
           <Suspense fallback={'加载中...'}>
-            <HotelInfo />
+            <Home />
           </Suspense>
         ),
       },

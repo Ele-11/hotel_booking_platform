@@ -93,7 +93,7 @@ const AddHotel: FC = () => {
       images: doneFiles.map((f) => f.response?.data?.url || f.url || '').filter(Boolean),
     };
     console.log('提交：', submitData);
-    message.success('提交成功（示例：已打印数据）');
+    message.success('提交成功');
   };
 
   const previewUrls = imageList

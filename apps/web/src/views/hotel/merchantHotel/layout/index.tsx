@@ -14,7 +14,7 @@ const LayoutHotel: FC = () => {
   const items = [
     {
       label: '首页',
-      key: '/',
+      key: '/merchant',
       icon: <HomeIcon />,
     },
     { label: '信息管理', key: '/merchant/list', icon: <MenuIcon /> },
