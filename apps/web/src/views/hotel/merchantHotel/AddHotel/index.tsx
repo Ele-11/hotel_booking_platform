@@ -16,13 +16,15 @@ import {
 import type { CheckboxOptionType, InputNumberProps, UploadFile, UploadProps } from 'antd';
 import dayjs from 'dayjs';
 import { FC, useMemo, useState } from 'react';
+import AddressPicker from '@/components/ui/AddressPicker';
 import FormFooterBar from '@/components/ui/FormFooterBar';
 import HotelStar from '@/components/ui/HotelStar';
 import SectionTitle from '@/components/ui/SectionTitle';
+type AddressValue = import('@/components/ui/AddressPicker').AddressValue;
 
 interface HotelFormData {
   title: string;
-  address: string;
+  address: AddressValue;
   star: number;
   type: number;
   roomTypes: string[];
@@ -112,6 +114,7 @@ const AddHotel: FC = () => {
             roomTypes: ['单人间'],
             minPrice: 0,
             maxPrice: 9999,
+            address: {},
           }}
         >
           <div className="space-y-6">
@@ -143,9 +146,21 @@ const AddHotel: FC = () => {
                   <Form.Item
                     label="酒店地址"
                     name="address"
-                    rules={[{ required: true, message: '请输入酒店地址' }]}
+                    rules={[
+                      {
+                        validator: (_, v) => {
+                          const ok =
+                            v?.regionCodes?.length === 3 &&
+                            v?.regionNames?.length === 3 &&
+                            (v?.detail?.trim()?.length ?? 0) >= 2;
+                          return ok
+                            ? Promise.resolve()
+                            : Promise.reject(new Error('请选择省/市/区并填写详细地址'));
+                        },
+                      },
+                    ]}
                   >
-                    <Input className="input" placeholder="例如：浙江省杭州市西湖区××路××号" />
+                    <AddressPicker />
                   </Form.Item>
                 </Col>
 
@@ -199,7 +214,6 @@ const AddHotel: FC = () => {
                 </div>
                 <div className="rounded-lg border border-box-border bg-gray-50 p-4">
                   <div className="text-sm font-medium text-heading-2">预览</div>
-                  {/* <div className="mt-2 text-xs text-heading-3">前台样式预览（示意）。</div> */}
 
                   <div className="mt-3">
                     {coverType === 0 ? (
