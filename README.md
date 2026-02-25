@@ -86,9 +86,6 @@ pnpm dev:web
   }
 ```
 
-![image-20260201225610357](C:\Users\邓祥宇\AppData\Roaming\Typora\typora-user-images\image-20260201225610357.png)
-
-
 
 1. 配置 tsconfig.json 使用 `"module": "ESNext"`
 

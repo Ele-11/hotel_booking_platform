@@ -1,8 +1,8 @@
 // 基础类型定义
 export interface IBaseEntity {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 
