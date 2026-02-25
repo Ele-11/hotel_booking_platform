@@ -1,5 +1,5 @@
 // apps/server/src/modules/banners/banners.controller.ts
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Inject } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
@@ -10,7 +10,7 @@ import { UpdateBannerDto } from './dto/update-banner.dto';
 @ApiTags('Banners')
 @Controller('banners')
 export class BannersController {
-  constructor(private bannersService: BannersService) {}
+  constructor(@Inject(BannersService) private readonly bannersService: BannersService) {}
 
   // 创建广告（需要管理员权限）
   @UseGuards(AuthGuard('jwt'))
@@ -21,7 +21,15 @@ export class BannersController {
   @ApiResponse({ status: 401, description: '未认证' })
   @ApiResponse({ status: 403, description: '权限不足，只有管理员可以创建广告' })
   async create(@Body() createBannerDto: CreateBannerDto) {
-    return this.bannersService.create(createBannerDto);
+    return this.bannersService.create(createBannerDto); 
+  }
+
+  // 获取公开广告（无需权限）
+  @Get('public')
+  @ApiOperation({ summary: '获取公开广告' })
+  @ApiResponse({ status: 200, description: '返回公开广告列表' })
+  async findPublic() {
+    return this.bannersService.findPublic();
   }
 
   // 获取广告列表（需要管理员权限）
@@ -34,14 +42,6 @@ export class BannersController {
   @ApiResponse({ status: 403, description: '权限不足，只有管理员可以获取广告列表' })
   async findAll(@Query() query: QueryBannerDto) {
     return this.bannersService.findAll(query);
-  }
-
-  // 获取公开广告（无需权限）
-  @Get('public')
-  @ApiOperation({ summary: '获取公开广告' })
-  @ApiResponse({ status: 200, description: '返回公开广告列表' })
-  async findPublic() {
-    return this.bannersService.findPublic();
   }
 
   // 获取单个广告（需要管理员权限）

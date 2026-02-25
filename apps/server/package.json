@@ -21,7 +21,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:reset": "prisma migrate reset"
+    "prisma:reset": "prisma migrate reset",
+    "prisma:seed": "tsx prisma/seed-complete.ts"
   },
   "dependencies": {
     "@hotel-booking-platform/shared-types": "workspace:*",

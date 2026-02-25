@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
