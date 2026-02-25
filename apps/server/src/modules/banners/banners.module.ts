@@ -5,7 +5,13 @@ import { BannersService } from './banners.service';
 
 @Module({
   controllers: [BannersController],
-  providers: [BannersService, PrismaService],
+  providers: [
+    BannersService,
+    {
+      provide: PrismaService,
+      useFactory: () => new PrismaService(),
+    },
+  ],
   exports: [BannersService],
 })
 export class BannersModule {}

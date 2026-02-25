@@ -1,15 +1,21 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { HotelsService } from './hotels.service';
 
+
 @ApiTags('Hotels')
 @Controller('hotels')
 export class HotelsController {
-  constructor(private hotelsService: HotelsService) {}
+  private hotelsService: HotelsService;
+
+  constructor() {
+    this.hotelsService = new HotelsService(new PrismaService());
+  }
 
   // 创建酒店
   @UseGuards(AuthGuard('jwt'))
@@ -30,6 +36,13 @@ export class HotelsController {
   @ApiResponse({ status: 200, description: '返回酒店列表' })
   async findAll(@Query() query: QueryHotelsDto) {
     return this.hotelsService.findAll(query);
+  }
+
+  // 临时调试接口 - 获取所有酒店（包括未发布的）
+  @Get('debug/all')
+  @ApiOperation({ summary: '调试接口 - 获取所有酒店' })
+  async debugFindAll() {
+    return this.hotelsService.debugFindAll();
   }
 
   // 获取单个酒店

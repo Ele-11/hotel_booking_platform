@@ -10,7 +10,7 @@ export class BannersService {
   constructor(private prisma: PrismaService) {}
 
   // 创建广告
-  async create(createBannerDto: CreateBannerDto) {
+  async create(createBannerDto: CreateBannerDto) { 
     return this.prisma.banner.create({
       data: {
         ...createBannerDto,

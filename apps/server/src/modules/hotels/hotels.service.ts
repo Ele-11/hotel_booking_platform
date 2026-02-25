@@ -14,9 +14,24 @@ export class HotelsService {
     return this.prisma.hotel.create({
       data: {
         ...hotelData,
-        name: hotelData.nameZh, 
+        name: hotelData.nameZh,
+        englishName: hotelData.nameEn,
         status: HotelStatus.PENDING, // 新创建的酒店默认为待审核状态
         owner: { connect: { id: userId } },
+      },
+    });
+  }
+
+  // 调试方法 - 获取所有酒店（包括未发布的）
+  async debugFindAll() {
+    return this.prisma.hotel.findMany({
+      select: {
+        id: true,
+        name: true,
+        city: true,
+        status: true,
+        deletedAt: true,
+        createdAt: true,
       },
     });
   }
@@ -38,7 +53,7 @@ export class HotelsService {
       limit = 10,
     } = query;
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where: Record<string, unknown> = {
       status: HotelStatus.PUBLISHED,
@@ -47,8 +62,8 @@ export class HotelsService {
 
     if (keyword) {
       where.OR = [
-        { nameZh: { contains: keyword, mode: 'insensitive' } },
-        { nameEn: { contains: keyword, mode: 'insensitive' } },
+        { name: { contains: keyword, mode: 'insensitive' } },
+        { englishName: { contains: keyword, mode: 'insensitive' } },
         { address: { contains: keyword, mode: 'insensitive' } },
       ];
     }
@@ -57,8 +72,12 @@ export class HotelsService {
       where.city = { contains: city, mode: 'insensitive' };
     }
 
+    console.log('starRatings参数:', starRatings, typeof starRatings, Array.isArray(starRatings));
     if (starRatings && Array.isArray(starRatings) && starRatings.length > 0) {
       where.starRating = { in: starRatings.map(Number) };
+    } else if (starRatings && !Array.isArray(starRatings)) {
+      // 如果是单个值，转换为数组
+      where.starRating = { in: [Number(starRatings)] };
     }
 
     // 标签筛选
@@ -73,8 +92,8 @@ export class HotelsService {
         some: {
           pricePlans: {
             some: {
-              ...(minPrice !== undefined && { pricePerNight: { gte: minPrice } }),
-              ...(maxPrice !== undefined && { pricePerNight: { lte: maxPrice } }),
+              ...(minPrice !== undefined && { price: { gte: Number(minPrice) } }),
+              ...(maxPrice !== undefined && { price: { lte: Number(maxPrice) } }),
             }
           },
           // 日期筛选：假设房型有 availableFrom/availableTo 字段
@@ -100,7 +119,7 @@ export class HotelsService {
       this.prisma.hotel.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: {
           [sortBy]: sortOrder,
         },
@@ -114,6 +133,9 @@ export class HotelsService {
       }),
       this.prisma.hotel.count({ where }),
     ]);
+
+    console.log('查询结果:', { data: data.length, total });
+    console.log('第一个酒店:', data[0]);
 
     return {
       data,
