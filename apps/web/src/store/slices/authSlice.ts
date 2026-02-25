@@ -1,102 +1,26 @@
-// import { authAPI } from '@/api/auth';
-import {
-  ApiError,
-  ILoginRequest,
-  ILoginResponse,
-  IUser,
-} from '@hotel-booking-platform/shared-types/src';
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+export type UserRole = 'admin' | 'merchant';
 
-interface AuthState {
-  user: IUser | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
+const TOKEN_KEY = 'token';
+const ROLE_KEY = 'role';
+
+export function setAuth(token: string, role: UserRole) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(ROLE_KEY, role);
 }
 
-const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  loading: false,
-  error: null,
-};
+export function clearAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(ROLE_KEY);
+}
 
-// 异步 thunks
-// export const login = createAsyncThunk(
-//   'auth/login',
-//   async (credentials: ILoginRequest, { rejectWithValue }) => {
-//     try {
-//       const response = await authAPI.login(credentials);
-//       localStorage.setItem('token', response.accessToken);
-//       return response;
-//     } catch (error: unknown) {
-//       const apiError = error as ApiError;
-//       return rejectWithValue(apiError.response?.data?.message || '登录失败');
-//     }
-//   }
-// );
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
 
-export const logout = createAsyncThunk('auth/logout', async () => {
-  localStorage.removeItem('token');
-});
+export function getRole(): UserRole | null {
+  return (localStorage.getItem(ROLE_KEY) as UserRole | null) ?? null;
+}
 
-export const fetchCurrentUser = createAsyncThunk(
-  'auth/fetchCurrentUser',
-  async (_, { rejectWithValue }) => {
-    try {
-      // return await authAPI.getCurrentUser();
-    } catch (error: unknown) {
-      const apiError = error as ApiError;
-      return rejectWithValue(apiError.response?.data?.message || '获取用户信息失败');
-    }
-  }
-);
-
-const authSlice = createSlice({
-  name: 'auth',
-  initialState,
-  reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      // Login
-      // .addCase(login.pending, (state) => {
-      //   state.loading = true;
-      //   state.error = null;
-      // })
-      // .addCase(login.fulfilled, (state, action: PayloadAction<ILoginResponse>) => {
-      //   state.loading = false;
-      //   state.user = action.payload.user;
-      //   state.token = action.payload.accessToken;
-      // })
-      // .addCase(login.rejected, (state, action) => {
-      //   state.loading = false;
-      //   state.error = action.payload as string;
-      // })
-      // Logout
-      .addCase(logout.fulfilled, (state) => {
-        state.user = null;
-        state.token = null;
-      })
-      // Fetch current user
-      .addCase(fetchCurrentUser.pending, (state) => {
-        state.loading = true;
-      })
-      // .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<IUser>) => {
-      //   state.loading = false;
-      //   state.user = action.payload;
-      // })
-      .addCase(fetchCurrentUser.rejected, (state) => {
-        state.loading = false;
-        state.user = null;
-        state.token = null;
-        localStorage.removeItem('token');
-      });
-  },
-});
-
-export const { clearError } = authSlice.actions;
-export default authSlice.reducer;
+export function isAuthed() {
+  return Boolean(getToken());
+}

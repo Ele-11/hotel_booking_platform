@@ -4,26 +4,61 @@ import {
   QuestionCircleOutlined,
   ArrowLeftOutlined,
   ArrowRightOutlined,
+  MailOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { Form, Card, Input, Button, Checkbox, Radio } from 'antd';
+import { Form, Card, Input, Button, Checkbox, Radio, message } from 'antd';
 import { FC, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login, register } from '@/api/auth';
 
 const Login: FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const handleSubmit = () => {
-    if (isLogin) {
-      navigate('/merchant/hotel');
-    } else {
-      navigate('/login');
-      togglePage(true);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+
+      if (isLogin) {
+        const res = await login({
+          email: values.email,
+          password: values.password,
+        });
+        localStorage.setItem('access_token', res.access_token);
+        localStorage.setItem('userInfo', JSON.stringify(res.user));
+
+        if (res.user.role === 'admin') {
+          message.success('管理员登录成功');
+          navigate('/admin');
+        } else if (res.user.role === 'user') {
+          message.success('商家登录成功');
+          navigate('/merchant');
+        }
+      } else {
+        await register({
+          email: values.email,
+          username: values.username,
+          fullName: values.fullName,
+          password: values.password,
+          role: values.role,
+        });
+        message.success('注册成功，请登录');
+        togglePage(true);
+      }
+    } catch (error: any) {
+      message.error(error.response?.data?.message || '操作失败，请稍后重试');
+    } finally {
+      setLoading(false);
     }
   };
+
   const togglePage = (status: boolean) => {
     setIsLogin(status);
-    form.resetFields(); // 重置表单
+    form.resetFields();
   };
 
   const roleOptions = [
@@ -42,7 +77,10 @@ const Login: FC = () => {
           onFinish={handleSubmit}
           size="large"
           layout="vertical"
-          initialValues={{ remember: true, role: 'admin' }}
+          initialValues={{
+            remember: true,
+            ...(isLogin ? {} : { role: 'admin' }),
+          }}
         >
           {!isLogin && (
             <Form.Item
@@ -53,21 +91,48 @@ const Login: FC = () => {
               <Radio.Group options={roleOptions} size="large" block />
             </Form.Item>
           )}
+
           <Form.Item
-            name="username"
+            name="email"
             validateTrigger="onBlur"
             rules={[
-              { required: true },
-              { min: 3, max: 20, message: '用户名长度应在3到20个字符之间' },
-              { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名仅支持字母、数字和下划线' },
+              { required: true, message: '请输入邮箱地址' },
+              { type: 'email', message: '请输入有效的邮箱地址' },
             ]}
             className="mb-4"
           >
             <Input
-              placeholder={isLogin ? '请输入用户名' : '请设置用户名'}
-              prefix={<UserAddOutlined className="text-gray-400" />}
+              placeholder={isLogin ? '请输入登录邮箱' : '请输入注册邮箱'}
+              prefix={<MailOutlined className="text-gray-400" />}
             />
           </Form.Item>
+
+          {!isLogin && (
+            <Form.Item
+              name="username"
+              rules={[{ required: true, message: '请设置用户名' }]}
+              className="mb-4"
+            >
+              <Input
+                placeholder="请设置用户名"
+                prefix={<UserOutlined className="text-gray-400" />}
+              />
+            </Form.Item>
+          )}
+
+          {!isLogin && (
+            <Form.Item
+              name="fullName"
+              rules={[{ required: true, message: '请输入真实姓名' }]}
+              className="mb-4"
+            >
+              <Input
+                placeholder="请输入真实姓名"
+                prefix={<UserAddOutlined className="text-gray-400" />}
+              />
+            </Form.Item>
+          )}
+
           <Form.Item
             name="password"
             validateTrigger="onBlur"
@@ -82,10 +147,11 @@ const Login: FC = () => {
             className="mb-6"
           >
             <Input.Password
-              placeholder={isLogin ? '请输入密码' : '请设置密码'}
+              placeholder={isLogin ? '请输入登录密码' : '请设置密码'}
               prefix={<LockOutlined className="text-gray-400" />}
             />
           </Form.Item>
+
           {!isLogin && (
             <Form.Item
               name="confirmPwd"
@@ -95,7 +161,6 @@ const Login: FC = () => {
                 { required: true, message: '请再次输入密码' },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    // 校验两次密码是否一致
                     if (!value || getFieldValue('password') === value) return Promise.resolve();
                     return Promise.reject(new Error('两次输入的密码不一致，请重新输入'));
                   },
@@ -109,6 +174,7 @@ const Login: FC = () => {
               />
             </Form.Item>
           )}
+
           {isLogin && (
             <div className="flex items-center justify-between mb-6">
               <Form.Item name="remember" valuePropName="checked" noStyle>
@@ -120,16 +186,19 @@ const Login: FC = () => {
               </a>
             </div>
           )}
+
           <Form.Item>
             <Button
               type="primary"
               htmlType="submit"
               block
+              loading={loading}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {isLogin ? '登录' : '注册'}
             </Button>
           </Form.Item>
+
           <div className="text-center mt-4">
             {isLogin ? (
               <a
