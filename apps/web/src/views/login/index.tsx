@@ -31,10 +31,10 @@ const Login: FC = () => {
         localStorage.setItem('access_token', res.access_token);
         localStorage.setItem('userInfo', JSON.stringify(res.user));
 
-        if (res.user.role === 'admin') {
+        if (res.user.role === 'ADMIN') {
           message.success('管理员登录成功');
           navigate('/admin');
-        } else if (res.user.role === 'user') {
+        } else if (res.user.role === 'MERCHANT') {
           message.success('商家登录成功');
           navigate('/merchant');
         }
@@ -62,8 +62,8 @@ const Login: FC = () => {
   };
 
   const roleOptions = [
-    { label: '管理员', value: 'admin' },
-    { label: '商家', value: 'user' },
+    { label: '管理员', value: 'ADMIN' },
+    { label: '商家', value: 'MERCHANT' },
   ];
 
   return (
@@ -79,7 +79,7 @@ const Login: FC = () => {
           layout="vertical"
           initialValues={{
             remember: true,
-            ...(isLogin ? {} : { role: 'admin' }),
+            ...(isLogin ? {} : { role: 'ADMIN' }),
           }}
         >
           {!isLogin && (

@@ -15,7 +15,7 @@ interface LoginResponse {
 }
 export const login = (data: { email: string; password: string }): Promise<LoginResponse> => {
   return request<LoginResponse>({
-    url: '/auth/login',
+    url: '/api/auth/login',
     method: 'POST',
     data,
   });
@@ -29,7 +29,7 @@ export const register = (data: {
   role: 'admin' | 'user';
 }): Promise<LoginResponse> => {
   return request<LoginResponse>({
-    url: '/auth/register',
+    url: '/api/auth/register',
     method: 'POST',
     data,
   });
