@@ -1,15 +1,17 @@
 import { ConfigProvider, theme } from 'antd';
 import { FC } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppSelector } from './store/hooks';
 import HotelAuditPage from './views/hotel/adminHotel/HotelAudit';
 import HotelDetailPage from './views/hotel/adminHotel/HotelDetail';
 import HotelPage from './views/hotel/adminHotel/HotelPage';
 import LayoutHotelA from './views/hotel/adminHotel/layout';
 import AddHotel from './views/hotel/merchantHotel/AddHotel';
+import Home from './views/hotel/merchantHotel/Home';
 import HotelInfo from './views/hotel/merchantHotel/HotelInfo';
 import LayoutHotel from './views/hotel/merchantHotel/layout';
 import Login from './views/login';
+
 const App: FC = () => {
   const currentTheme = useAppSelector((state) => state.theme.theme);
   return (
@@ -19,8 +21,10 @@ const App: FC = () => {
       }}
     >
       <Routes>
+        <Route path="/" element={<Navigate to="/merchant" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/merchant" element={<LayoutHotel />}>
+          <Route index element={<Home />} />
           <Route path="list" element={<HotelInfo />} />
           <Route path="add" element={<AddHotel />} />
         </Route>
