@@ -1,13 +1,11 @@
 //  创建用户相关类型
-
-
-import { IBaseEntity } from "../index";
+import { IBaseEntity } from '../index';
 
 // 用户角色
-export type UserRole = "admin" | "merchant" | "customer";
+export type UserRole = 'admin' | 'merchant' | 'customer';
 
 // 用户状态
-export type UserStatus = "active" | "inactive" | "suspended";
+export type UserStatus = 'active' | 'inactive' | 'suspended';
 
 // 用户基本信息
 export interface IUser extends IBaseEntity {

@@ -1,22 +1,48 @@
-// @ts-nocheck
-import { Route, Routes } from 'react-router-dom';
-import MHotel from './views/hotel/merchantHotel';
+import { ConfigProvider, theme } from 'antd';
+import { FC } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAppSelector } from './store/hooks';
+import HotelAuditPage from './views/hotel/adminHotel/HotelAudit';
+import HotelDetailPage from './views/hotel/adminHotel/HotelDetail';
+import HotelPage from './views/hotel/adminHotel/HotelPage';
+import LayoutHotelA from './views/hotel/adminHotel/layout';
+import AddHotel from './views/hotel/merchantHotel/AddHotel';
+import Home from './views/hotel/merchantHotel/Home';
+import HotelInfo from './views/hotel/merchantHotel/HotelInfo';
+import LayoutHotel from './views/hotel/merchantHotel/layout';
 import Login from './views/login';
 
 const App: FC = () => {
+  const currentTheme = useAppSelector((state) => state.theme.theme);
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/merchant/hotel" element={<MHotel />} />
-      <Route
-        path="*"
-        element={
-          <div>
-            页面不存在，<a href="/login">返回登录</a>
-          </div>
-        }
-      />
-    </Routes>
+    <ConfigProvider
+      theme={{
+        algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      }}
+    >
+      <Routes>
+        <Route path="/" element={<Navigate to="/merchant" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/merchant" element={<LayoutHotel />}>
+          <Route index element={<Home />} />
+          <Route path="list" element={<HotelInfo />} />
+          <Route path="add" element={<AddHotel />} />
+        </Route>
+        <Route path="/admin" element={<LayoutHotelA />}>
+          <Route path="list" element={<HotelPage />} />
+          <Route path="audit" element={<HotelAuditPage />} />
+          <Route path="hotel/:id" element={<HotelDetailPage />} />
+        </Route>
+        <Route
+          path="*"
+          element={
+            <div>
+              页面不存在，<a href="/login">返回登录</a>
+            </div>
+          }
+        />
+      </Routes>
+    </ConfigProvider>
   );
 };
 

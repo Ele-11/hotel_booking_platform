@@ -1,23 +1,36 @@
-import {
-    ILoginRequest,
-    ILoginResponse,
-    IRegisterRequest,
-    IUser,
-} from "@hotel_booking_platform/shared-types";
-import api from ".";
+import request from '../utils/request';
 
-export const authAPI = {
-  login: (data: ILoginRequest): Promise<ILoginResponse> =>
-    api.post("/auth/login", data).then((res) => res.data),
+interface UserInfo {
+  id: number;
+  email: string;
+  username: string;
+  fullName: string;
+  role: 'admin' | 'user';
+}
 
-  register: (data: IRegisterRequest): Promise<IUser> =>
-    api.post("/auth/register", data).then((res) => res.data),
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  user: UserInfo;
+}
+export const login = (data: { email: string; password: string }): Promise<LoginResponse> => {
+  return request<LoginResponse>({
+    url: '/auth/login',
+    method: 'POST',
+    data,
+  });
+};
 
-  getCurrentUser: (): Promise<IUser> =>
-    api.get("/auth/me").then((res) => res.data),
-
-  refreshToken: (refreshToken: string): Promise<ILoginResponse> =>
-    api.post("/auth/refresh", { refreshToken }).then((res) => res.data),
-
-  logout: (): Promise<void> => api.post("/auth/logout"),
+export const register = (data: {
+  email: string;
+  username: string;
+  fullName: string;
+  password: string;
+  role: 'admin' | 'user';
+}): Promise<LoginResponse> => {
+  return request<LoginResponse>({
+    url: '/auth/register',
+    method: 'POST',
+    data,
+  });
 };

@@ -4,8 +4,9 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ES2020",
+    "module": "ESNext",
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
@@ -29,7 +30,9 @@
       "@utils/*": ["src/utils/*"],
       "@assets/*": ["src/assets/*"],
       "@hotel-booking-platform/shared-types": ["./packages/shared-types/src/index.ts"]
-    }
+    },
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "types": ["node"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
