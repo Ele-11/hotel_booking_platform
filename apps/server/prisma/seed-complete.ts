@@ -99,9 +99,11 @@ async function seedCompleteData() {
     let merchantRecord;
     if (!existingUser) {
       const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+      // 只包含User模型中存在的字段
+      const { companyName, ...userFields } = userData;
       merchantRecord = await prisma.user.create({
         data: {
-          ...userData,
+          ...userFields,
           password: hashedPassword
         }
       });
@@ -988,7 +990,7 @@ async function seedCompleteData() {
     }
   }
 
-  console.log('数据库填充完成！');
+  console.log('数据库填充完成！'); 
 }
 
 seedCompleteData()
