@@ -17,11 +17,12 @@ export class HotelsService {
 
   // 创建酒店
   async create(userId: string, hotelData: CreateHotelDto) {
+    const { nameZh, nameEn, ...otherData } = hotelData;
     return this.prisma.hotel.create({
       data: {
-        ...hotelData,
-        name: hotelData.nameZh,
-        englishName: hotelData.nameEn,
+        ...otherData,
+        name: nameZh,
+        englishName: nameEn,
         status: HotelStatus.PENDING, // 新创建的酒店默认为待审核状态
         owner: { connect: { id: userId } },
       },
@@ -53,8 +54,8 @@ export class HotelsService {
       checkInDate,
       checkOutDate,
       tags,
-      sortBy = 'hotelNo',
-      sortOrder = 'asc',
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
       page = 1,
       limit = 10,
     } = query;

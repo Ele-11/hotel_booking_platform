@@ -46,7 +46,6 @@ model Merchant {
 
 model Hotel {
   id                String             @id @default(uuid())
-  hotelNo           Int?               @unique @default(autoincrement())
   name              String
   englishName       String?
   description       String
