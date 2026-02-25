@@ -93,34 +93,44 @@ export class HotelsService {
       where.tags = { hasSome: tags };
     }
 
+    // 构建房型筛选条件
+    const roomTypeConditions: Record<string, unknown> = {};
+    
     // 价格筛选
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.roomTypes = {
+    const priceConditions: Record<string, unknown> = {};
+    
+    if (minPrice !== undefined && minPrice !== null && !isNaN(minPrice)) {
+      priceConditions.gte = minPrice * 100; // 将元转换为分
+    }
+    
+    if (maxPrice !== undefined && maxPrice !== null && !isNaN(maxPrice)) {
+      priceConditions.lte = maxPrice * 100; // 将元转换为分
+    }
+    
+    if (Object.keys(priceConditions).length > 0) {
+      roomTypeConditions.pricePlans = {
         some: {
-          pricePlans: {
-            some: {
-              ...(minPrice !== undefined && { price: { gte: Number(minPrice) } }),
-              ...(maxPrice !== undefined && { price: { lte: Number(maxPrice) } }),
-            },
-          },
-          // 日期筛选：假设房型有 availableFrom/availableTo 字段
-          ...(checkInDate && checkOutDate
-            ? {
-                availableFrom: { lte: checkInDate },
-                availableTo: { gte: checkOutDate },
-              }
-            : {}),
-        },
-      };
-    } else if (checkInDate && checkOutDate) {
-      // 只筛选日期
-      where.roomTypes = {
-        some: {
-          availableFrom: { lte: checkInDate },
-          availableTo: { gte: checkOutDate },
+          price: priceConditions, // 将价格条件放在price字段中
         },
       };
     }
+    
+    // 日期筛选
+    if (checkInDate && checkOutDate) {
+      roomTypeConditions.availableFrom = { lte: checkInDate };
+      roomTypeConditions.availableTo = { gte: checkOutDate };
+    }
+    
+    // 如果有房型筛选条件，添加到where中
+    if (Object.keys(roomTypeConditions).length > 0) {
+      where.roomTypes = {
+        some: roomTypeConditions,
+      };
+    }
+    
+    console.log('价格筛选参数:', { minPrice, maxPrice });
+    console.log('房型筛选条件:', roomTypeConditions);
+    console.log('完整查询条件:', JSON.stringify(where, null, 2));
 
     const [data, total] = await Promise.all([
       this.prisma.hotel.findMany({
@@ -141,11 +151,48 @@ export class HotelsService {
       this.prisma.hotel.count({ where }),
     ]);
 
-    console.log('查询结果:', { data: data.length, total });
-    console.log('第一个酒店:', data[0]);
+    console.log('价格筛选参数:', { minPrice, maxPrice });
+    
+    // 转换价格从分到元，并过滤房型
+    const dataWithConvertedPrices = data.map(hotel => {
+      // 如果有价格筛选条件，只返回符合价格条件的房型
+      let filteredRoomTypes = hotel.roomTypes;
+      
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        console.log(`酒店 ${hotel.name} 的房型数量: ${hotel.roomTypes.length}`);
+        
+        filteredRoomTypes = hotel.roomTypes.filter(roomType => {
+          // 检查房型是否有符合价格条件的价格计划
+          const hasMatchingPricePlan = roomType.pricePlans.some(plan => {
+            const price = plan.price / 100; // 转换为元
+            const meetsMinPrice = minPrice === undefined || minPrice === null || isNaN(minPrice) || price >= minPrice;
+            const meetsMaxPrice = maxPrice === undefined || maxPrice === null || isNaN(maxPrice) || price <= maxPrice;
+            
+            console.log(`房型 ${roomType.name} 价格: ${price}元, 符合条件: ${meetsMinPrice && meetsMaxPrice}`);
+            
+            return meetsMinPrice && meetsMaxPrice;
+          });
+          
+          return hasMatchingPricePlan;
+        });
+        
+        console.log(`过滤后房型数量: ${filteredRoomTypes.length}`);
+      }
+      
+      return {
+        ...hotel,
+        roomTypes: filteredRoomTypes.map(roomType => ({
+          ...roomType,
+          pricePlans: roomType.pricePlans.map(plan => ({
+            ...plan,
+            price: plan.price / 100, // 将分转换为元
+          })),
+        })),
+      };
+    });
 
     return {
-      data,
+      data: dataWithConvertedPrices,
       meta: {
         page: Number(page),
         limit: Number(limit),
@@ -439,7 +486,7 @@ export class HotelsService {
         const pricePlan = roomType.pricePlans[0]; // 默认取最新的价格计划
 
         // 计算价格（如果有具体日期，可以根据日期计算）
-        const price = pricePlan ? pricePlan.price : 0;
+        const price = pricePlan ? pricePlan.price / 100 : 0; // 将分转换为元
 
         // 检查房型在指定日期的可用性
         let isAvailable = true; // 默认为可用
