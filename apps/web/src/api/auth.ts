@@ -26,7 +26,7 @@ export const register = (data: {
   username: string;
   fullName: string;
   password: string;
-  role: 'admin' | 'user';
+  role: 'ADMIN' | 'MERCHANT';
 }): Promise<LoginResponse> => {
   return request<LoginResponse>({
     url: '/api/auth/register',

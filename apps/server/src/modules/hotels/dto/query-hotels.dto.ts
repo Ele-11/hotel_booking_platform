@@ -16,7 +16,7 @@
   page: 可选，页码，默认值为1，最小值为1
   limit: 可选，每页条数，默认值为10，范围1-100
 */
-
+import { Type } from 'class-transformer';
 import { IsOptional, IsString, IsNumber, Min, Max, IsArray, IsDateString } from 'class-validator';
 
 export class QueryHotelsDto {
@@ -30,13 +30,16 @@ export class QueryHotelsDto {
 
   @IsOptional()
   @IsArray()
+  @Type(() => Number)
   starRatings?: number[];
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   minPrice?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   maxPrice?: number;
 
@@ -49,11 +52,13 @@ export class QueryHotelsDto {
   sortOrder?: 'asc' | 'desc';
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   page?: number = 1;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   @Max(100)

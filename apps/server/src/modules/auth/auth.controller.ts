@@ -1,6 +1,6 @@
 //主要功能: 处理身份验证相关的HTTP请求，如登录、注册和获取用户资料。
 
-import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Req, UseGuards, Inject } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UserService } from '../users/user.service';
@@ -12,8 +12,8 @@ import { RegisterDto } from './dto/register.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
-    private authService: AuthService,
-    private userService: UserService,
+    @Inject(AuthService) private readonly authService: AuthService,
+    @Inject(UserService) private readonly userService: UserService
   ) {}
 
   //登录端点 - POST /auth/login

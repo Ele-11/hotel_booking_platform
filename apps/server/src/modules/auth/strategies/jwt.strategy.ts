@@ -1,38 +1,43 @@
-// 主要功能：JWT认证策略
-// 用于验证请求中的JWT令牌，提取用户信息并加载到当前请求中
-
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserService } from '../../users/user.service';
 
-// 定义JWT载荷接口
 interface JwtPayload {
-  sub: string; // 用户ID
+  sub: string;
   email?: string;
-  iat?: number; // 发行时间
-  exp?: number; // 过期时间
-  [key: string]: unknown; // 支持其他可选字段
+  iat?: number;
+  exp?: number;
+  [key: string]: unknown;
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
-    private userService: UserService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(UserService) private readonly userService: UserService
   ) {
     const jwtSecret = configService.get('JWT_SECRET');
-    // 构造函数配置JWT策略
+    // console.log('JWT_SECRET:', jwtSecret);
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),  // 从 Authorization: Bearer <token> 提取
-      ignoreExpiration: false,  // 不忽略过期时间
-      secretOrKey: jwtSecret,  // 使用环境变量中的密钥
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: jwtSecret,
     });
   }
 
-  // 验证方法：根据JWT载荷中的用户ID查找用户信息
+  // async validate(payload: JwtPayload) {
+  //   return await this.userService.findById(payload.sub);
+  // }
   async validate(payload: JwtPayload) {
-    return await this.userService.findById(payload.sub);
+    console.log('Decoded JWT Payload:', payload); // 打印解码后的 payload
+    const user = await this.userService.findById(payload.sub);
+    if (!user) {
+      console.error('User not found for ID:', payload.sub); // 打印错误日志
+      throw new UnauthorizedException('用户未认证');
+    }
+    console.log('Authenticated User:', user); // 打印找到的用户信息
+    return user;
   }
 }

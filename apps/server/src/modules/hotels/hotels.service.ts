@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
 import { Hotel, User, UserRole, HotelStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
@@ -7,14 +13,14 @@ import { UpdateHotelDto } from './dto/update-hotel.dto';
 
 @Injectable()
 export class HotelsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   // 创建酒店
   async create(userId: string, hotelData: CreateHotelDto) {
     return this.prisma.hotel.create({
       data: {
         ...hotelData,
-        name: hotelData.nameZh, 
+        name: hotelData.nameZh,
         status: HotelStatus.PENDING, // 新创建的酒店默认为待审核状态
         owner: { connect: { id: userId } },
       },
@@ -32,8 +38,8 @@ export class HotelsService {
       checkInDate,
       checkOutDate,
       tags,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
+      sortBy = 'hotelNo',
+      sortOrder = 'asc',
       page = 1,
       limit = 10,
     } = query;
@@ -75,7 +81,7 @@ export class HotelsService {
             some: {
               ...(minPrice !== undefined && { pricePerNight: { gte: minPrice } }),
               ...(maxPrice !== undefined && { pricePerNight: { lte: maxPrice } }),
-            }
+            },
           },
           // 日期筛选：假设房型有 availableFrom/availableTo 字段
           ...(checkInDate && checkOutDate
@@ -100,7 +106,7 @@ export class HotelsService {
       this.prisma.hotel.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: {
           [sortBy]: sortOrder,
         },
@@ -367,7 +373,7 @@ export class HotelsService {
     hotelId: string,
     checkInDate?: string,
     checkOutDate?: string,
-    guests?: number,
+    guests?: number
   ) {
     // 查询酒店及其房型信息
     const hotel = await this.prisma.hotel.findUnique({
@@ -384,15 +390,9 @@ export class HotelsService {
                 isActive: true,
                 // 如果提供了日期，可以基于日期筛选价格
                 ...(checkInDate && {
-                  OR: [
-                    { startDate: { lte: new Date(checkInDate) } },
-                    { startDate: null },
-                  ],
+                  OR: [{ startDate: { lte: new Date(checkInDate) } }, { startDate: null }],
                   ...(checkOutDate && {
-                    OR: [
-                      { endDate: { gte: new Date(checkOutDate) } },
-                      { endDate: null },
-                    ],
+                    OR: [{ endDate: { gte: new Date(checkOutDate) } }, { endDate: null }],
                   }),
                 }),
               },
@@ -410,30 +410,33 @@ export class HotelsService {
     }
 
     // 计算每个房型的实时价格和库存状态
-    const roomTypesWithPrices = await Promise.all(hotel.roomTypes.map(async (roomType) => {
-      // 获取最相关的价格计划（通常是最新或活动中的）
-      const pricePlan = roomType.pricePlans[0]; // 默认取最新的价格计划
-      
-      // 计算价格（如果有具体日期，可以根据日期计算）
-      const price = pricePlan ? pricePlan.price : 0;
-    
-      // 检查房型在指定日期的可用性
-      let isAvailable = true; // 默认为可用
-      if (checkInDate && checkOutDate) {
-        isAvailable = await this.isRoomTypeAvailable(
-          roomType.id,
-          new Date(checkInDate),
-          new Date(checkOutDate)
-        );
-      }
+    const roomTypesWithPrices = await Promise.all(
+      hotel.roomTypes.map(async (roomType) => {
+        // 获取最相关的价格计划（通常是最新或活动中的）
+        const pricePlan = roomType.pricePlans[0]; // 默认取最新的价格计划
 
-      return {
-        ...roomType,
-        currentPrice: price,
-        isAvailable,
-        originalPricePlans: roomType.pricePlans, // 保留原始价格计划信息
-      };
-    }));
+        // 计算价格（如果有具体日期，可以根据日期计算）
+        const price = pricePlan ? pricePlan.price : 0;
+
+        // 检查房型在指定日期的可用性
+        let isAvailable = true; // 默认为可用
+
+        if (checkInDate && checkOutDate) {
+          isAvailable = await this.isRoomTypeAvailable(
+            roomType.id,
+            new Date(checkInDate),
+            new Date(checkOutDate)
+          );
+        }
+
+        return {
+          ...roomType,
+          currentPrice: price,
+          isAvailable,
+          originalPricePlans: roomType.pricePlans, // 保留原始价格计划信息
+        };
+      })
+    );
 
     return {
       hotelId: hotel.id,
@@ -443,7 +446,11 @@ export class HotelsService {
   }
 
   // 检查房型在指定日期是否可用
-  async isRoomTypeAvailable(roomTypeId: string, checkInDate: Date, checkOutDate: Date): Promise<boolean> {
+  async isRoomTypeAvailable(
+    roomTypeId: string,
+    checkInDate: Date,
+    checkOutDate: Date
+  ): Promise<boolean> {
     // 查询在指定日期范围内是否有其他预订占用了该房型
     const conflictingBooking = await this.prisma.booking.findFirst({
       where: {
@@ -480,7 +487,7 @@ export class HotelsService {
         parsedCheckInDate,
         parsedCheckOutDate
       );
-      
+
       availabilityResults.push({
         roomTypeId: roomType.id,
         roomTypeName: roomType.name,
@@ -489,7 +496,7 @@ export class HotelsService {
     }
 
     // 检查酒店整体是否可用（至少有一个房型可用）
-    const isHotelAvailable = availabilityResults.some(result => result.isAvailable);
+    const isHotelAvailable = availabilityResults.some((result) => result.isAvailable);
 
     return {
       hotelId,

@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+  Inject,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { CreateHotelDto } from './dto/create-hotel.dto';
@@ -9,7 +23,13 @@ import { HotelsService } from './hotels.service';
 @ApiTags('Hotels')
 @Controller('hotels')
 export class HotelsController {
-  constructor(private hotelsService: HotelsService) {}
+  constructor(@Inject(HotelsService) private readonly hotelsService: HotelsService) {}
+
+  private getUserId(req): string {
+    const userId = req?.user?.id ?? req?.user?.sub;
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+    return userId;
+  }
 
   // 创建酒店
   @UseGuards(AuthGuard('jwt'))
@@ -20,7 +40,7 @@ export class HotelsController {
   @ApiResponse({ status: 401, description: '未认证' })
   @ApiResponse({ status: 403, description: '权限不足' })
   async create(@Body() createHotelDto: CreateHotelDto, @Req() req) {
-    return this.hotelsService.create(req.user.id, createHotelDto);
+    return this.hotelsService.create(this.getUserId(req), createHotelDto);
   }
 
   // 获取酒店列表
@@ -30,6 +50,31 @@ export class HotelsController {
   @ApiResponse({ status: 200, description: '返回酒店列表' })
   async findAll(@Query() query: QueryHotelsDto) {
     return this.hotelsService.findAll(query);
+  }
+
+  // 商户获取自己的酒店列表
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my-hotels')
+  @ApiOperation({ summary: '商户获取自己的酒店列表' })
+  @ApiResponse({ status: 200, description: '返回商户的酒店列表' })
+  @ApiResponse({ status: 401, description: '未认证' })
+  @ApiResponse({ status: 403, description: '权限不足' })
+  async getUserHotels(@Req() req) {
+    return this.hotelsService.getUserHotels(this.getUserId(req));
+  }
+
+  // 获取待审核酒店列表
+  @UseGuards(AuthGuard('jwt'))
+  @Get('pending')
+  @ApiOperation({ summary: '获取待审核酒店列表' })
+  @ApiResponse({ status: 200, description: '返回待审核酒店列表' })
+  @ApiResponse({ status: 401, description: '未认证' })
+  @ApiResponse({ status: 403, description: '权限不足，只有管理员可以查看待审核酒店' })
+  async getPendingHotels(@Req() req) {
+    if (req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can view pending hotels');
+    }
+    return this.hotelsService.getPendingHotels(this.getUserId(req));
   }
 
   // 获取单个酒店
@@ -42,19 +87,29 @@ export class HotelsController {
     return this.hotelsService.findOne(id);
   }
 
-// 获取酒店房型及价格信息
+  // 获取酒店房型及价格信息
   @Get(':id/room-types')
   @ApiOperation({ summary: '获取酒店房型及价格信息' })
   @ApiParam({ name: 'id', description: '酒店ID' })
-  @ApiQuery({ name: 'checkInDate', required: false, description: '入住日期', example: '2023-12-01' })
-  @ApiQuery({ name: 'checkOutDate', required: false, description: '退房日期', example: '2023-12-03' })
+  @ApiQuery({
+    name: 'checkInDate',
+    required: false,
+    description: '入住日期',
+    example: '2023-12-01',
+  })
+  @ApiQuery({
+    name: 'checkOutDate',
+    required: false,
+    description: '退房日期',
+    example: '2023-12-03',
+  })
   @ApiQuery({ name: 'guests', required: false, description: '客人数量', example: 2 })
   @ApiResponse({ status: 200, description: '返回房型及价格信息' })
   async getRoomTypes(
-    @Param('id') hotelId: string, 
+    @Param('id') hotelId: string,
     @Query('checkInDate') checkInDate?: string,
     @Query('checkOutDate') checkOutDate?: string,
-    @Query('guests') guests?: number,
+    @Query('guests') guests?: number
   ) {
     return this.hotelsService.getRoomTypesWithPrices(hotelId, checkInDate, checkOutDate, guests);
   }
@@ -68,7 +123,7 @@ export class HotelsController {
   async checkAvailability(
     @Param('id') hotelId: string,
     @Query('checkInDate') checkInDate: string,
-    @Query('checkOutDate') checkOutDate: string,
+    @Query('checkOutDate') checkOutDate: string
   ) {
     return this.hotelsService.checkHotelAvailability(hotelId, checkInDate, checkOutDate);
   }
@@ -84,7 +139,7 @@ export class HotelsController {
   @ApiResponse({ status: 403, description: '权限不足' })
   @ApiResponse({ status: 404, description: '酒店不存在' })
   async update(@Param('id') id: string, @Body() updateHotelDto: UpdateHotelDto, @Req() req) {
-    return this.hotelsService.update(id, req.user.id, updateHotelDto);
+    return this.hotelsService.update(id, this.getUserId(req), updateHotelDto);
   }
 
   // 删除酒店（软删除）
@@ -97,18 +152,7 @@ export class HotelsController {
   @ApiResponse({ status: 403, description: '权限不足' })
   @ApiResponse({ status: 404, description: '酒店不存在' })
   async remove(@Param('id') id: string, @Req() req) {
-    return this.hotelsService.delete(id, req.user.id);
-  }
-
-  // 商户获取自己的酒店列表
-  @UseGuards(AuthGuard('jwt'))
-  @Get('my-hotels')
-  @ApiOperation({ summary: '商户获取自己的酒店列表' })
-  @ApiResponse({ status: 200, description: '返回商户的酒店列表' })
-  @ApiResponse({ status: 401, description: '未认证' })
-  @ApiResponse({ status: 403, description: '权限不足' })
-  async getUserHotels(@Req() req) {
-    return this.hotelsService.getUserHotels(req.user.id);
+    return this.hotelsService.delete(id, this.getUserId(req));
   }
 
   // 管理员审核功能
@@ -146,7 +190,7 @@ export class HotelsController {
     return this.hotelsService.rejectHotel(id, req.user.id, reason);
   }
 
-  // 管理员发布酒店 
+  // 管理员发布酒店
   @UseGuards(AuthGuard('jwt'))
   @Put(':id/publish')
   @ApiOperation({ summary: '发布酒店' })
@@ -176,19 +220,5 @@ export class HotelsController {
       throw new Error('Only admins can unpublish hotels');
     }
     return this.hotelsService.unpublishHotel(id, req.user.id);
-  }
-
-  // 获取待审核酒店列表
-  @UseGuards(AuthGuard('jwt'))
-  @Get('pending')
-  @ApiOperation({ summary: '获取待审核酒店列表' })
-  @ApiResponse({ status: 200, description: '返回待审核酒店列表' })
-  @ApiResponse({ status: 401, description: '未认证' })
-  @ApiResponse({ status: 403, description: '权限不足，只有管理员可以查看待审核酒店' })
-  async getPendingHotels(@Req() req) {
-    if (req.user.role !== 'ADMIN') {
-      throw new Error('Only admins can view pending hotels');
-    }
-    return this.hotelsService.getPendingHotels(req.user.id);
   }
 }
