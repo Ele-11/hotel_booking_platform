@@ -35,7 +35,7 @@ export const RootNavigator = () => {
             <Stack.Screen
                 name="HotelDetail"
                 component={HotelDetailScreen}
-                // 关键修复点：显式为 route 注解类型 👇
+
                 options={({ route }: NativeStackScreenProps<RootStackParamList, 'HotelDetail'>) => ({
                     title: route.params?.hotelName || '酒店详情', headerShown: false
                 })}

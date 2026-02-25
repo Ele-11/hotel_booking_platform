@@ -1,4 +1,3 @@
-import Geolocation from '@react-native-community/geolocation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -6,8 +5,6 @@ import {
     FlatList,
     Image,
     Modal,
-    PermissionsAndroid,
-    Platform,
     ScrollView,
     Text,
     TextInput,
@@ -15,36 +12,91 @@ import {
     View
 } from 'react-native';
 
+
+import { getCurrentCitySimplified } from '../../utils/location';
 // 导入第三方数据包
 import citiesRaw from 'china-division/dist/cities.json';
 import provincesRaw from 'china-division/dist/provinces.json';
 
-import Calendar_My from '../../components/Calendar_My'; // 确保路径正确
+import Calendar_My from '../../components/Calendar_My';
 import { RootStackParamList } from '../../navigation/types';
 
-// import Calendar_My from '.../components/Calendar_My';
+
 import { styles, width } from './index.styles';
 
-// --- 数据预处理 ---
-const provinceList = provincesRaw.map(p => p.name);
-const cityMap: Record<string, string[]> = {};
+
+// 省份列表
+const provinceList = provincesRaw.map(p => ({ label: p.name, value: p.name }));
+
+// 城市映射（省份名 -> 城市对象数组）
+const cityMap: Record<string, { label: string; value: string }[]> = {};
 provincesRaw.forEach(p => {
-    const matchedCities = citiesRaw.filter(c => c.provinceCode === p.code).map(c => c.name);
+    const matchedCities = citiesRaw
+        .filter(c => c.provinceCode === p.code)
+        .map(c => ({ label: c.name, value: c.name }));
     cityMap[p.name] = matchedCities;
 });
 
 const FILTER_DATA = {
-    prices: ['不限', '￥0-150', '￥150-300', '￥300-600', '￥600-1000', '￥1000以上'],
-    roomTypes: ['不限', '大床房', '双人建筑', '单人床', '三人间', '套房']
+    prices: [
+        { label: '不限', value: '' },
+        { label: '￥0-150', value: '0-150' },
+        { label: '￥150-300', value: '150-300' },
+        { label: '￥300-600', value: '300-600' },
+        { label: '￥600-1000', value: '600-1000' },
+        { label: '￥1000以上', value: '1000-99999' }
+    ],
+    roomTypes: [
+        { label: '不限', value: '' },
+        { label: '大床房', value: '大床房' },
+        { label: '双床房', value: '双床房' },
+        { label: '单人床', value: '单人床' },
+        { label: '三人间', value: '三人间' },
+        { label: '套房', value: '套房' }
+    ]
 };
 
+// const BANNERS = [
+//     { id: '1', title: '春季特惠：三亚海景房 5 折起', uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800' },
+//     { id: '2', title: '深山避暑：莫干山精品民宿', uri: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800' },
+//     { id: '3', title: '魔都之夜：上海外滩景观房', uri: 'https://images.unsplash.com/photo-1506059612708-99d6c258160e?w=800' },
+//     { id: '4', title: '古城韵味：大理洱海阳光房', uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800' },
+//     { id: '5', title: '亲子时光：长隆主题酒店', uri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800' },
+// ];
+
 const BANNERS = [
-    { id: '1', title: '春季特惠：三亚海景房 5 折起', uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800' },
-    { id: '2', title: '深山避暑：莫干山精品民宿', uri: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800' },
-    { id: '3', title: '魔都之夜：上海外滩景观房', uri: 'https://images.unsplash.com/photo-1506059612708-99d6c258160e?w=800' },
-    { id: '4', title: '古城韵味：大理洱海阳光房', uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800' },
-    { id: '5', title: '亲子时光：长隆主题酒店', uri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800' },
+    {
+        id: '1',
+        hotelName: '三亚海景度假酒店',
+        title: '春季特惠：三亚海景房 5 折起',
+        uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
+    },
+    {
+        id: '2',
+        hotelName: '莫干山精品民宿',
+        title: '深山避暑：莫干山精品民宿',
+        uri: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'
+    },
+    {
+        id: '3',
+        hotelName: '上海外滩景观酒店',
+        title: '魔都之夜：上海外滩景观房',
+        uri: 'https://images.unsplash.com/photo-1506059612708-99d6c258160e?w=800'
+    },
+    {
+        id: '4',
+        hotelName: '大理洱海阳光客栈',
+        title: '古城韵味：大理洱海阳光房',
+        uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800'
+    },
+    {
+        id: '5',
+        hotelName: '广州长隆主题酒店',
+        title: '亲子时光：长隆主题酒店',
+        uri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'
+    },
 ];
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -65,13 +117,13 @@ const HomeScreen = ({ navigation }: Props) => {
     // 日期状态
     const [calendarVisible, setCalendarVisible] = useState(false);
     const [dateInfo, setDateInfo] = useState({
-        startDisplay: '02月03日',
-        startWeek: '周二',
-        startStr: '2026-02-03',
-        endDisplay: '02月05日',
-        endWeek: '周四',
-        endStr: '2026-02-05',
-        nights: 2
+        startDisplay: new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }).replace('.', '/').replace('.', ''),
+        startWeek: new Date().toLocaleDateString('zh-CN', { weekday: 'short' }),
+        startStr: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace('.', '-').replace('.', ''),
+        endDisplay: (new Date(Date.now() + 24 * 60 * 60 * 1000)).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }).replace('.', '/').replace('.', ''),
+        endWeek: new Date().toLocaleDateString('zh-CN', { weekday: 'short' }),
+        endStr: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace('.', '-').replace('.', ''),
+        nights: 1
     });
 
     // 选择器控制
@@ -110,62 +162,87 @@ const HomeScreen = ({ navigation }: Props) => {
             setActiveIndex(index);
         }
     };
-    // --- 2. 定位逻辑 ---
+    // 定位按钮点击事件
     const handleLocationPress = async () => {
         setIsLoading(true);
-        if (Platform.OS === 'android') {
-            const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-            if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-                Alert.alert("权限拒绝", "请开启定位权限");
-                setIsLoading(false);
-                return;
-            }
-        }
-        Geolocation.getCurrentPosition(async (pos) => {
-            try {
-                let { longitude, latitude } = pos.coords;
-                if (__DEV__ && longitude === 116.341431) {
-                    longitude = 115.85; // 默认经度
-                    latitude = 28.68;   // 默认纬度
-                }
-                const AMAP_KEY = '3164f44f2c88fa71022b2c1f5784deac'; // dxy申请的高德web的位置api-key
-                const url = `https://restapi.amap.com/v3/geocode/regeo?location=${pos.coords.longitude},${pos.coords.latitude}&key=${AMAP_KEY}`;
-                const res = await (await fetch(url)).json();
-                if (res.status === '1') {
-                    const comp = res.regeocode.addressComponent;
-                    setProvince("江西省");
-                    setCity("南昌市");
-                }
+        try {
+            const AMAP_KEY = '3164f44f2c88fa71022b2c1f5784deac';
+            // 调用工具函数
+            const cityResult = await getCurrentCitySimplified(AMAP_KEY);
 
-            } catch (e) { Alert.alert("网络错误"); }
-            finally {
-                setIsLoading(false);
-                console.log(pos.coords);
+            if (cityResult) {
+                const [province, city] = cityResult;
+                setProvince(province);
+                setCity(city);
+                Alert.alert('定位成功', `当前位置：${province} ${city}`);
             }
-        }, () => setIsLoading(false), { timeout: 3000 });
+        } catch (e) {
+            Alert.alert('定位出错', '请检查网络或定位权限');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // --- 3. 选择器逻辑 ---
+    // // --- 3. 选择器逻辑 ---
+    // const openPicker = (type: typeof pickingType) => {
+    //     setPickingType(type);
+    //     setModalVisible(true);
+    // };
+
+
+    // // 选择器点击时，存储对应的 value
+    // const handleSelect = (item: { label: string; value: string }) => {
+    //     if (pickingType === 'price') {
+    //         setPrice(item.value);
+    //     } else if (pickingType === 'roomType') {
+    //         setRoomType(item.value);
+    //     }
+    //     setModalVisible(false);
+    // };
+
+    // // 修改 getModalData 返回带 value 的数据
+    // const getModalData = () => {
+    //     if (pickingType === 'price') return FILTER_DATA.prices;
+    //     if (pickingType === 'roomType') return FILTER_DATA.roomTypes;
+    //     // 其他保持不变
+    //     if (pickingType === 'province') return provinceList;
+    //     if (pickingType === 'city') return cityMap[province] || [];
+    //     return [];
+    // };
+
+
+
+    // 选择器打开函数（不变）
     const openPicker = (type: typeof pickingType) => {
         setPickingType(type);
         setModalVisible(true);
     };
 
-    const handleSelect = (item: string) => {
+    // 修改 handleSelect，接收对象参数
+    const handleSelect = (item: { label: string; value: string }) => {
         if (pickingType === 'province') {
-            setProvince(item);
-            setCity(cityMap[item][0] || item);
-        } else if (pickingType === 'city') setCity(item);
-        else if (pickingType === 'price') setPrice(item);
-        else if (pickingType === 'roomType') setRoomType(item);
+            setProvince(item.value);
+            // 选择省份后，默认选中该省份的第一个城市
+            if (cityMap[item.value] && cityMap[item.value].length > 0) {
+                setCity(cityMap[item.value][0].value);
+            }
+        } else if (pickingType === 'city') {
+            setCity(item.value);
+        } else if (pickingType === 'price') {
+            setPrice(item.value);
+        } else if (pickingType === 'roomType') {
+            setRoomType(item.value);
+        }
         setModalVisible(false);
     };
 
+    // getModalData 现在统一返回对象数组
     const getModalData = () => {
         if (pickingType === 'province') return provinceList;
         if (pickingType === 'city') return cityMap[province] || [];
         if (pickingType === 'price') return FILTER_DATA.prices;
-        return FILTER_DATA.roomTypes;
+        if (pickingType === 'roomType') return FILTER_DATA.roomTypes;
+        return [];
     };
 
     // --- 渲染部分 ---
@@ -198,7 +275,12 @@ const HomeScreen = ({ navigation }: Props) => {
                         <TouchableOpacity
                             key={banner.id}
                             activeOpacity={0.9}
-                            onPress={() => navigation.navigate('HotelDetail', { hotelId: banner.id })}
+                            onPress={() => navigation.navigate('HotelDetail',
+                                {
+                                    hotelId: banner.id,
+                                    hotelName: banner.hotelName   // 传入酒店名称
+                                }
+                            )}
                             style={{ width: width, height: 180 }}
                         >
                             <Image source={{ uri: banner.uri }} style={styles.bannerImage} />
@@ -318,8 +400,12 @@ const HomeScreen = ({ navigation }: Props) => {
                 <TouchableOpacity
                     style={styles.searchButton}
                     onPress={() => navigation.navigate('HotelList', {
-                        city, province, price, roomType,
-                        startDate: dateInfo.startStr, endDate: dateInfo.endStr
+                        city,
+                        province,
+                        price,          // 现在是值，如 '150-300'
+                        roomType,       // 现在是值，如 '大床房'
+                        startDate: dateInfo.startStr,
+                        endDate: dateInfo.endStr
                     })}
                 >
                     <Text style={styles.searchButtonText}>查询酒店</Text>
@@ -336,10 +422,10 @@ const HomeScreen = ({ navigation }: Props) => {
                         </View>
                         <FlatList
                             data={getModalData()}
-                            keyExtractor={(item) => item}
+                            keyExtractor={(item) => item.value}
                             renderItem={({ item }) => (
                                 <TouchableOpacity style={styles.modalItem} onPress={() => handleSelect(item)}>
-                                    <Text style={styles.modalItemText}>{item}</Text>
+                                    <Text style={styles.modalItemText}>{item.label}</Text>
                                 </TouchableOpacity>
                             )}
                         />
