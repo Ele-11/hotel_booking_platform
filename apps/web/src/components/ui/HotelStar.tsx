@@ -9,12 +9,14 @@ interface HotelStarProps {
   onChange?: (star: number) => void;
   placeholder?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 const HotelStar: FC<HotelStarProps> = ({
   value = 0,
   onChange = () => {},
   required = false,
   placeholder = '请选择酒店星级（1-5星）',
+  disabled = false,
 }) => {
   const validValue = value && value >= 1 && value <= 5 ? value : 0;
 
@@ -33,7 +35,7 @@ const HotelStar: FC<HotelStarProps> = ({
     <div className="hotel-star-container">
       <Tooltip title={validValue === 0 ? placeholder : `${validValue} 星级酒店 `} placement="top">
         <Rate
-          disabled={false}
+          disabled={disabled}
           value={validValue}
           count={5}
           allowHalf={false}

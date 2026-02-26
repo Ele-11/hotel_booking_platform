@@ -28,6 +28,6 @@ export class RegisterDto {
   @Length(8, 100)
   password: string;
 
-  @IsEnum(UserRole)  // 验证是预定义的用户角色之一
+  @IsEnum(UserRole)
   role: UserRole;
 }

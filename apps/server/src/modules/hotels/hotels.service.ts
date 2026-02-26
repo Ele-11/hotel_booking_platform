@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
 import { Hotel, User, UserRole, HotelStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
@@ -7,16 +13,32 @@ import { UpdateHotelDto } from './dto/update-hotel.dto';
 
 @Injectable()
 export class HotelsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   // 创建酒店
   async create(userId: string, hotelData: CreateHotelDto) {
+    const { nameZh, nameEn, ...otherData } = hotelData;
     return this.prisma.hotel.create({
       data: {
-        ...hotelData,
-        name: hotelData.nameZh, 
+        ...otherData,
+        name: nameZh,
+        englishName: nameEn,
         status: HotelStatus.PENDING, // 新创建的酒店默认为待审核状态
         owner: { connect: { id: userId } },
+      },
+    });
+  }
+
+  // 调试方法 - 获取所有酒店（包括未发布的）
+  async debugFindAll() {
+    return this.prisma.hotel.findMany({
+      select: {
+        id: true,
+        name: true,
+        city: true,
+        status: true,
+        deletedAt: true,
+        createdAt: true,
       },
     });
   }
@@ -38,7 +60,7 @@ export class HotelsService {
       limit = 10,
     } = query;
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where: Record<string, unknown> = {
       status: HotelStatus.PUBLISHED,
@@ -47,8 +69,8 @@ export class HotelsService {
 
     if (keyword) {
       where.OR = [
-        { nameZh: { contains: keyword, mode: 'insensitive' } },
-        { nameEn: { contains: keyword, mode: 'insensitive' } },
+        { name: { contains: keyword, mode: 'insensitive' } },
+        { englishName: { contains: keyword, mode: 'insensitive' } },
         { address: { contains: keyword, mode: 'insensitive' } },
       ];
     }
@@ -57,8 +79,12 @@ export class HotelsService {
       where.city = { contains: city, mode: 'insensitive' };
     }
 
+    console.log('starRatings参数:', starRatings, typeof starRatings, Array.isArray(starRatings));
     if (starRatings && Array.isArray(starRatings) && starRatings.length > 0) {
       where.starRating = { in: starRatings.map(Number) };
+    } else if (starRatings && !Array.isArray(starRatings)) {
+      // 如果是单个值，转换为数组
+      where.starRating = { in: [Number(starRatings)] };
     }
 
     // 标签筛选
@@ -67,40 +93,50 @@ export class HotelsService {
       where.tags = { hasSome: tags };
     }
 
+    // 构建房型筛选条件
+    const roomTypeConditions: Record<string, unknown> = {};
+    
     // 价格筛选
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.roomTypes = {
+    const priceConditions: Record<string, unknown> = {};
+    
+    if (minPrice !== undefined && minPrice !== null && !isNaN(minPrice)) {
+      priceConditions.gte = minPrice * 100; // 将元转换为分
+    }
+    
+    if (maxPrice !== undefined && maxPrice !== null && !isNaN(maxPrice)) {
+      priceConditions.lte = maxPrice * 100; // 将元转换为分
+    }
+    
+    if (Object.keys(priceConditions).length > 0) {
+      roomTypeConditions.pricePlans = {
         some: {
-          pricePlans: {
-            some: {
-              ...(minPrice !== undefined && { pricePerNight: { gte: minPrice } }),
-              ...(maxPrice !== undefined && { pricePerNight: { lte: maxPrice } }),
-            }
-          },
-          // 日期筛选：假设房型有 availableFrom/availableTo 字段
-          ...(checkInDate && checkOutDate
-            ? {
-                availableFrom: { lte: checkInDate },
-                availableTo: { gte: checkOutDate },
-              }
-            : {}),
-        },
-      };
-    } else if (checkInDate && checkOutDate) {
-      // 只筛选日期
-      where.roomTypes = {
-        some: {
-          availableFrom: { lte: checkInDate },
-          availableTo: { gte: checkOutDate },
+          price: priceConditions, // 将价格条件放在price字段中
         },
       };
     }
+    
+    // 日期筛选
+    if (checkInDate && checkOutDate) {
+      roomTypeConditions.availableFrom = { lte: checkInDate };
+      roomTypeConditions.availableTo = { gte: checkOutDate };
+    }
+    
+    // 如果有房型筛选条件，添加到where中
+    if (Object.keys(roomTypeConditions).length > 0) {
+      where.roomTypes = {
+        some: roomTypeConditions,
+      };
+    }
+    
+    console.log('价格筛选参数:', { minPrice, maxPrice });
+    console.log('房型筛选条件:', roomTypeConditions);
+    console.log('完整查询条件:', JSON.stringify(where, null, 2));
 
     const [data, total] = await Promise.all([
       this.prisma.hotel.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: {
           [sortBy]: sortOrder,
         },
@@ -115,8 +151,48 @@ export class HotelsService {
       this.prisma.hotel.count({ where }),
     ]);
 
+    console.log('价格筛选参数:', { minPrice, maxPrice });
+    
+    // 转换价格从分到元，并过滤房型
+    const dataWithConvertedPrices = data.map(hotel => {
+      // 如果有价格筛选条件，只返回符合价格条件的房型
+      let filteredRoomTypes = hotel.roomTypes;
+      
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        console.log(`酒店 ${hotel.name} 的房型数量: ${hotel.roomTypes.length}`);
+        
+        filteredRoomTypes = hotel.roomTypes.filter(roomType => {
+          // 检查房型是否有符合价格条件的价格计划
+          const hasMatchingPricePlan = roomType.pricePlans.some(plan => {
+            const price = plan.price / 100; // 转换为元
+            const meetsMinPrice = minPrice === undefined || minPrice === null || isNaN(minPrice) || price >= minPrice;
+            const meetsMaxPrice = maxPrice === undefined || maxPrice === null || isNaN(maxPrice) || price <= maxPrice;
+            
+            console.log(`房型 ${roomType.name} 价格: ${price}元, 符合条件: ${meetsMinPrice && meetsMaxPrice}`);
+            
+            return meetsMinPrice && meetsMaxPrice;
+          });
+          
+          return hasMatchingPricePlan;
+        });
+        
+        console.log(`过滤后房型数量: ${filteredRoomTypes.length}`);
+      }
+      
+      return {
+        ...hotel,
+        roomTypes: filteredRoomTypes.map(roomType => ({
+          ...roomType,
+          pricePlans: roomType.pricePlans.map(plan => ({
+            ...plan,
+            price: plan.price / 100, // 将分转换为元
+          })),
+        })),
+      };
+    });
+
     return {
-      data,
+      data: dataWithConvertedPrices,
       meta: {
         page: Number(page),
         limit: Number(limit),
@@ -367,7 +443,7 @@ export class HotelsService {
     hotelId: string,
     checkInDate?: string,
     checkOutDate?: string,
-    guests?: number,
+    guests?: number
   ) {
     // 查询酒店及其房型信息
     const hotel = await this.prisma.hotel.findUnique({
@@ -384,15 +460,9 @@ export class HotelsService {
                 isActive: true,
                 // 如果提供了日期，可以基于日期筛选价格
                 ...(checkInDate && {
-                  OR: [
-                    { startDate: { lte: new Date(checkInDate) } },
-                    { startDate: null },
-                  ],
+                  OR: [{ startDate: { lte: new Date(checkInDate) } }, { startDate: null }],
                   ...(checkOutDate && {
-                    OR: [
-                      { endDate: { gte: new Date(checkOutDate) } },
-                      { endDate: null },
-                    ],
+                    OR: [{ endDate: { gte: new Date(checkOutDate) } }, { endDate: null }],
                   }),
                 }),
               },
@@ -410,30 +480,33 @@ export class HotelsService {
     }
 
     // 计算每个房型的实时价格和库存状态
-    const roomTypesWithPrices = await Promise.all(hotel.roomTypes.map(async (roomType) => {
-      // 获取最相关的价格计划（通常是最新或活动中的）
-      const pricePlan = roomType.pricePlans[0]; // 默认取最新的价格计划
-      
-      // 计算价格（如果有具体日期，可以根据日期计算）
-      const price = pricePlan ? pricePlan.price : 0;
-    
-      // 检查房型在指定日期的可用性
-      let isAvailable = true; // 默认为可用
-      if (checkInDate && checkOutDate) {
-        isAvailable = await this.isRoomTypeAvailable(
-          roomType.id,
-          new Date(checkInDate),
-          new Date(checkOutDate)
-        );
-      }
+    const roomTypesWithPrices = await Promise.all(
+      hotel.roomTypes.map(async (roomType) => {
+        // 获取最相关的价格计划（通常是最新或活动中的）
+        const pricePlan = roomType.pricePlans[0]; // 默认取最新的价格计划
 
-      return {
-        ...roomType,
-        currentPrice: price,
-        isAvailable,
-        originalPricePlans: roomType.pricePlans, // 保留原始价格计划信息
-      };
-    }));
+        // 计算价格（如果有具体日期，可以根据日期计算）
+        const price = pricePlan ? pricePlan.price / 100 : 0; // 将分转换为元
+
+        // 检查房型在指定日期的可用性
+        let isAvailable = true; // 默认为可用
+
+        if (checkInDate && checkOutDate) {
+          isAvailable = await this.isRoomTypeAvailable(
+            roomType.id,
+            new Date(checkInDate),
+            new Date(checkOutDate)
+          );
+        }
+
+        return {
+          ...roomType,
+          currentPrice: price,
+          isAvailable,
+          originalPricePlans: roomType.pricePlans, // 保留原始价格计划信息
+        };
+      })
+    );
 
     return {
       hotelId: hotel.id,
@@ -443,7 +516,11 @@ export class HotelsService {
   }
 
   // 检查房型在指定日期是否可用
-  async isRoomTypeAvailable(roomTypeId: string, checkInDate: Date, checkOutDate: Date): Promise<boolean> {
+  async isRoomTypeAvailable(
+    roomTypeId: string,
+    checkInDate: Date,
+    checkOutDate: Date
+  ): Promise<boolean> {
     // 查询在指定日期范围内是否有其他预订占用了该房型
     const conflictingBooking = await this.prisma.booking.findFirst({
       where: {
@@ -480,7 +557,7 @@ export class HotelsService {
         parsedCheckInDate,
         parsedCheckOutDate
       );
-      
+
       availabilityResults.push({
         roomTypeId: roomType.id,
         roomTypeName: roomType.name,
@@ -489,7 +566,7 @@ export class HotelsService {
     }
 
     // 检查酒店整体是否可用（至少有一个房型可用）
-    const isHotelAvailable = availabilityResults.some(result => result.isAvailable);
+    const isHotelAvailable = availabilityResults.some((result) => result.isAvailable);
 
     return {
       hotelId,

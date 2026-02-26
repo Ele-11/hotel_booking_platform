@@ -1,11 +1,11 @@
 // 主要功能：用户服务
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   // 根据邮箱查找用户
   async findByEmail(email: string): Promise<User | null> {
@@ -15,9 +15,9 @@ export class UserService {
   }
 
   // 根据ID查找用户
-  async findById(id: string): Promise<User | null> {
+  async findById(userId: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
     });
   }
 
@@ -29,15 +29,17 @@ export class UserService {
   }
 
   // 查找所有用户
-  async findAll(): Promise<Array<{
-    id: string;
-    email: string;
-    username: string;
-    fullName: string;
-    role: string;
-    status: string;
-    createdAt: Date;
-  }>> {
+  async findAll(): Promise<
+    Array<{
+      id: string;
+      email: string;
+      username: string;
+      fullName: string;
+      role: string;
+      status: string;
+      createdAt: Date;
+    }>
+  > {
     return this.prisma.user.findMany({
       where: {
         deletedAt: null,

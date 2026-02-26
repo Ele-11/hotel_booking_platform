@@ -1,5 +1,3 @@
-//主要功能: 定义身份验证模块，包括控制器、服务、策略和依赖注入。
-
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -23,6 +21,7 @@ import { LocalStrategy } from './strategies/local.strategy';
       inject: [ConfigService],
     }),
   ],
+<<<<<<< HEAD
   providers: [
     AuthService,
     {
@@ -36,7 +35,10 @@ import { LocalStrategy } from './strategies/local.strategy';
     UserService,
     ConfigService,
   ],
+=======
+>>>>>>> 165f9c0f7b184d6f403c68eb3f3346b03caf3b53
   controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, LocalStrategy, UserService, PrismaService],
   exports: [AuthService],
 })
 export class AuthModule {}

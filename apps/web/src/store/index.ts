@@ -1,6 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import hotelCreateReducer from './slices/hotelCreateSlice';
+import hotelReducer from './slices/hotelSlice';
 import themeReducer from './slices/themeSlice';
 
 const persistConfig = {
@@ -13,6 +15,8 @@ const persistedReducer = persistReducer(persistConfig, themeReducer);
 export const store = configureStore({
   reducer: {
     theme: persistedReducer,
+    hotels: hotelReducer,
+    hotelCreate: hotelCreateReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
