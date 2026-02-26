@@ -1,12 +1,13 @@
 //主要功能: 处理身份验证相关的HTTP请求，如登录、注册和获取用户资料。
 
 import { Controller, Post, Body, Get, Req, UseGuards, Inject } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+// import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UserService } from '../users/user.service';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -37,7 +38,7 @@ export class AuthController {
   }
 
   //用户资料端点 - GET /auth/profile
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   @ApiOperation({ summary: '获取用户资料' })
   @ApiResponse({ status: 200, description: '获取用户资料成功' })

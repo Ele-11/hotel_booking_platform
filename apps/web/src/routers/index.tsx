@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { RouteObject } from 'react-router-dom';
+import { RouteObject, Navigate } from 'react-router-dom';
 const Login = lazy(() => import('@/views/login'));
 import AHotel from '@/views/hotel/adminHotel';
 import HotelAuditPage from '@/views/hotel/adminHotel/HotelAudit';
@@ -12,15 +12,23 @@ import Layout from '@/views/hotel/merchantHotel/layout';
 
 const routes: RouteObject[] = [
   {
+    path: '/',
+    element: <Navigate to="/login" replace />,
+  },
+  {
     path: '/login',
-    element: <Login />,
+    element: (
+      <Suspense fallback={<div>加载中...</div>}>
+        <Login />
+      </Suspense>
+    ),
   },
   {
     path: '/merchant',
     element: <Layout />,
     children: [
       {
-        path: '/',
+        index: true,
         element: (
           <Suspense fallback={'加载中...'}>
             <Home />
@@ -50,7 +58,7 @@ const routes: RouteObject[] = [
     element: <LayoutA />,
     children: [
       {
-        path: '/list',
+        index: true,
         element: (
           <Suspense fallback={'加载中...'}>
             <AHotel />

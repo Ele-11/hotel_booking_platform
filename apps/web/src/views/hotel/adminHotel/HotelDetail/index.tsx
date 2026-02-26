@@ -30,9 +30,9 @@ const auditStatusLabelMap: Record<AuditStatus, string> = {
 
 const mockDetails: HotelDetail[] = [
   {
-    id: 50,
+    id: 1,
     name: '星海国际大酒店',
-    merchant: '商家 A',
+    merchant: 'zz',
     city: '上海',
     address: '浦东新区世纪大道 100 号',
     starLevel: '五星级',
@@ -49,9 +49,9 @@ const mockDetails: HotelDetail[] = [
     trafficInfo: '步行 5 分钟可达地铁 2 号线，距离浦东国际机场约 40 分钟车程。',
   },
   {
-    id: 51,
+    id: 2,
     name: '阳光海岸度假酒店',
-    merchant: '商家 B',
+    merchant: 'zz',
     city: '三亚',
     address: '三亚湾路 88 号',
     starLevel: '四星级',

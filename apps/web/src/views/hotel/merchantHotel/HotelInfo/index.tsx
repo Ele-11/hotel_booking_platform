@@ -6,18 +6,18 @@ import { useDispatch, useSelector } from 'react-redux';
 // import Theme from '@/components/ui/theme';
 import HotelStar from '@/components/ui/HotelStar';
 import { AppDispatch, RootState } from '@/store';
-import { fetchHotelList } from '@/store/slices/hotelSlice';
+import { fetchHotelList, deleteHotel } from '@/store/slices/hotelSlice';
 
-interface PricePlan {
-  id: string;
-  price: number;
-  isActive: boolean;
-}
+// interface PricePlan {
+//   id: string;
+//   price: number;
+//   isActive: boolean;
+// }
 
 interface RoomType {
   id: string;
   name: string;
-  pricePlans: PricePlan[];
+  // pricePlans: PricePlan[];
 }
 // 定义数据类型
 interface HotelData {
@@ -31,33 +31,46 @@ interface HotelData {
   country: string;
   status: string;
   roomTypes: RoomType[];
+  // minPrice: number;
+  // maxPrice: number;
   // priceRange: string;
-  // openingDate: string;
+  openingDate: string;
 }
 const HotelInfo: FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const {
-    list: hotelList,
-    meta = { limit: 10, page: 1, total: 0 },
-    loading,
-    error,
-  } = useSelector((state: RootState) => state.hotels);
+  const { list: hotelList, meta, loading, error } = useSelector((state: RootState) => state.hotels);
+  console.log('Hotel List:', hotelList);
+  console.log('Meta:', meta);
 
   useEffect(() => {
+    console.log('Dispatching fetchHotelList...');
     dispatch(fetchHotelList({ page: 1, limit: 10 }));
   }, [dispatch]);
   const handlePageChange = (page: number, pageSize: number) => {
     dispatch(fetchHotelList({ page, limit: pageSize }));
   };
+  const handleDelete = async (id: string) => {
+    try {
+      // 使用 unwrap() 来捕获 thunk 中的错误
+      await dispatch(deleteHotel(id)).unwrap();
+      message.success('删除成功');
+
+      // 可选：如果担心分页总数不准，可以重新拉取列表
+      // dispatch(fetchHotelList({ page: meta.page, limit: meta.limit }));
+    } catch (err: any) {
+      message.error(err || '删除失败');
+    }
+  };
+
   const columns: ColumnsType<HotelData> = [
-    {
-      title: '编号',
-      dataIndex: 'hotelNo',
-      key: 'hotelNo',
-      width: 80,
-      render: (v) => (v == null ? '-' : v),
-    },
+    // {
+    //   title: '编号',
+    //   dataIndex: 'hotelNo',
+    //   key: 'hotelNo',
+    //   width: 80,
+    //   render: (v) => (v == null ? '-' : v),
+    // },
     {
       title: '酒店名称',
       key: 'name',
@@ -80,52 +93,86 @@ const HotelInfo: FC = () => {
       width: 200,
       render: (stars) => <HotelStar value={Number(stars)} disabled />,
     },
+    // {
+    //   title: '酒店房型',
+    //   key: 'roomTypes',
+    //   width: 100,
+    //   render: (_, record) => (
+    //     <div className="space-y-1">
+    //       {record.roomTypes?.map((room) => {
+    //         const hotelName = record.name ?? '';
+    //         const rawName = room.name ?? '';
+
+    //         let displayName = rawName;
+    //         if (hotelName && displayName.startsWith(hotelName)) {
+    //           displayName = displayName.slice(hotelName.length);
+    //           displayName = displayName.replace(/^\s*-\s*/, '');
+    //         }
+    //         if (!displayName) displayName = rawName;
+
+    //         return (
+    //           <div key={room.id} className="text-xs">
+    //             {displayName}
+    //           </div>
+    //         );
+    //       }) || <div>暂无房型</div>}
+    //     </div>
+    //   ),
+    // },
     {
       title: '酒店房型',
       key: 'roomTypes',
-      width: 100,
-      render: (_, record) => (
-        <div className="space-y-1">
-          {record.roomTypes.map((room) => {
-            const hotelName = record.name ?? '';
-            const rawName = room.name ?? '';
-
-            let displayName = rawName;
-            if (hotelName && displayName.startsWith(hotelName)) {
-              displayName = displayName.slice(hotelName.length);
-              displayName = displayName.replace(/^[-–—\s·：:]+/, '');
-            }
-            if (!displayName) displayName = rawName;
-
-            return (
-              <div key={room.id} className="text-xs">
-                {displayName}
-              </div>
-            );
-          })}
-        </div>
-      ),
-    },
-    {
-      title: '价格范围',
-      key: 'priceRange',
-      width: 150,
+      width: 120,
       render: (_, record) => {
-        const prices = record.roomTypes
-          .flatMap((r) => r.pricePlans ?? [])
-          .map((p) => Number(p.price))
-          .filter(Number.isFinite);
+        const roomTypes = record.roomTypes || [];
+        // 明确判断长度
+        if (roomTypes.length === 0) {
+          return (
+            <div>
+              <p className="text-gray-400 text-xs">大床房</p>
+              <span className="text-gray-400 text-xs">双人间</span>
+            </div>
+          );
+        }
 
-        if (prices.length === 0) return <span className="text-gray-400">暂无价格</span>;
-        const min = Math.min(...prices);
-        const max = Math.max(...prices);
         return (
-          <span className="font-semibold text-blue-600">
-            {min === max ? `¥${min}` : `¥${min} - ¥${max}`}
-          </span>
+          <div className="space-y-1">
+            {roomTypes.map((room) => (
+              <div key={room.id} className="text-xs border-b border-gray-100 last:border-0">
+                {room.name}
+              </div>
+            ))}
+          </div>
         );
       },
     },
+    {
+      title: '开业时间',
+      dataIndex: 'openingDate',
+      key: 'openingDate',
+      width: 120,
+      render: (date) => new Date(date).toLocaleDateString(),
+    },
+    // {
+    //   title: '价格范围',
+    //   key: 'priceRange',
+    //   width: 150,
+    //   render: (_, record) => {
+    //     const prices = record.roomTypes
+    //       .flatMap((r) => r.pricePlans ?? [])
+    //       .map((p) => Number(p.price))
+    //       .filter(Number.isFinite);
+
+    //     if (prices.length === 0) return <span className="text-gray-400">暂无价格</span>;
+    //     const min = Math.min(...prices);
+    //     const max = Math.max(...prices);
+    //     return (
+    //       <span className="font-semibold text-blue-600">
+    //         {min === max ? `¥${min}` : `¥${min} - ¥${max}`}
+    //       </span>
+    //     );
+    //   },
+    // },
     {
       title: '操作',
       key: 'action',
@@ -141,7 +188,7 @@ const HotelInfo: FC = () => {
           <Popconfirm
             title="删除确认"
             description={`确定要删除酒店"${record.name}"吗？`}
-            onConfirm={() => message.success('删除成功')}
+            onConfirm={() => handleDelete(record.id)}
             okText="是"
             cancelText="否"
           >
@@ -159,6 +206,14 @@ const HotelInfo: FC = () => {
       </div>
     );
   }
+  if (loading) {
+    return <div>加载中...</div>;
+  }
+
+  if (!hotelList || hotelList.length === 0) {
+    return <div>暂无数据</div>;
+  }
+
   // const list: HotelData[] = [
   //   {
   //     id: 1,

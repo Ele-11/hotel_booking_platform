@@ -48,7 +48,7 @@ model Hotel {
   id                String             @id @default(uuid())
   hotelNo           Int?               @unique @default(autoincrement())
   name              String
-  englishName       String?
+  englishName       String
   description       String
   starRating        Int
   address           String
@@ -63,6 +63,10 @@ model Hotel {
   images            String[]
   status            HotelStatus        @default(PENDING)
   ownerId           String
+  openingDate       DateTime           @default(now())
+  discountInfo      String?
+  nearbyShopping    String?
+  nearbyTransport   String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   deletedAt         DateTime?
@@ -72,6 +76,8 @@ model Hotel {
   owner             User               @relation("HotelOwner", fields: [ownerId], references: [id])
   nearbyAttractions NearbyAttraction[]
   roomTypes         RoomType[]
+  minPrice          Int?
+  maxPrice          Int?
 
   @@index([ownerId])
   @@index([city])

@@ -17,27 +17,29 @@ export class HotelsService {
 
   // 创建酒店
   async create(userId: string, hotelData: CreateHotelDto) {
+    console.log('hotelData:', hotelData);
     return this.prisma.hotel.create({
       data: {
-        ...hotelData,
-        name: hotelData.nameZh,
-        englishName: hotelData.nameEn,
-        status: HotelStatus.PENDING, // 新创建的酒店默认为待审核状态
+        name: hotelData.name, // 确保从 hotelData 中获取 name
+        englishName: hotelData.englishName || '',
+        address: hotelData.address,
+        starRating: hotelData.starRating,
+        openingDate: new Date(hotelData.openingDate),
+        contactPhone: hotelData.contactPhone,
+        contactEmail: hotelData.contactEmail,
+        description: hotelData.description,
+        city: hotelData.city,
+        country: hotelData.country,
+        amenities: hotelData.amenities,
+        discountInfo: hotelData.discountInfo,
+        images: hotelData.images,
+        nearbyTransport: hotelData.nearbyTransport,
+        nearbyShopping: hotelData.nearbyShopping,
+        status: HotelStatus.PENDING,
+        minPrice: hotelData.minPrice,
+        maxPrice: hotelData.maxPrice,
+        rootTypes: hotelData.roomTypes,
         owner: { connect: { id: userId } },
-      },
-    });
-  }
-
-  // 调试方法 - 获取所有酒店（包括未发布的）
-  async debugFindAll() {
-    return this.prisma.hotel.findMany({
-      select: {
-        id: true,
-        name: true,
-        city: true,
-        status: true,
-        deletedAt: true,
-        createdAt: true,
       },
     });
   }
@@ -53,13 +55,13 @@ export class HotelsService {
       checkInDate,
       checkOutDate,
       tags,
-      sortBy = 'hotelNo',
-      sortOrder = 'asc',
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
       page = 1,
       limit = 10,
     } = query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
       status: HotelStatus.PUBLISHED,
@@ -68,8 +70,8 @@ export class HotelsService {
 
     if (keyword) {
       where.OR = [
-        { name: { contains: keyword, mode: 'insensitive' } },
-        { englishName: { contains: keyword, mode: 'insensitive' } },
+        { nameZh: { contains: keyword, mode: 'insensitive' } },
+        { nameEn: { contains: keyword, mode: 'insensitive' } },
         { address: { contains: keyword, mode: 'insensitive' } },
       ];
     }
@@ -78,12 +80,8 @@ export class HotelsService {
       where.city = { contains: city, mode: 'insensitive' };
     }
 
-    console.log('starRatings参数:', starRatings, typeof starRatings, Array.isArray(starRatings));
     if (starRatings && Array.isArray(starRatings) && starRatings.length > 0) {
       where.starRating = { in: starRatings.map(Number) };
-    } else if (starRatings && !Array.isArray(starRatings)) {
-      // 如果是单个值，转换为数组
-      where.starRating = { in: [Number(starRatings)] };
     }
 
     // 标签筛选
@@ -98,8 +96,8 @@ export class HotelsService {
         some: {
           pricePlans: {
             some: {
-              ...(minPrice !== undefined && { price: { gte: Number(minPrice) } }),
-              ...(maxPrice !== undefined && { price: { lte: Number(maxPrice) } }),
+              ...(minPrice !== undefined && { price: { gte: minPrice } }),
+              ...(maxPrice !== undefined && { price: { lte: maxPrice } }),
             },
           },
           // 日期筛选：假设房型有 availableFrom/availableTo 字段
@@ -139,9 +137,6 @@ export class HotelsService {
       }),
       this.prisma.hotel.count({ where }),
     ]);
-
-    console.log('查询结果:', { data: data.length, total });
-    console.log('第一个酒店:', data[0]);
 
     return {
       data,
@@ -379,15 +374,42 @@ export class HotelsService {
   }
 
   // 商户获取自己的酒店列表
-  async getUserHotels(userId: string) {
-    return this.prisma.hotel.findMany({
-      where: {
-        ownerId: userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
+  async getUserHotels(userId: string, query: QueryHotelsDto) {
+    const { page = 1, limit = 10 } = query;
+    // 确保分页参数是整数
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    // 查询总数
+    const total = await this.prisma.hotel.count({
+      where: { ownerId: userId },
+    });
+
+    // 查询酒店列表
+    const hotels = await this.prisma.hotel.findMany({
+      where: { ownerId: userId },
+      skip: (pageNumber - 1) * limitNumber,
+      take: limitNumber, // 确保这里传入的是整数
+      orderBy: { createdAt: 'desc' },
+      include: {
+        roomTypes: {
+          include: {
+            pricePlans: true,
+          },
+        },
       },
     });
+
+    // 构造响应数据
+    return {
+      data: hotels,
+      meta: {
+        page: pageNumber,
+        limit: limitNumber,
+        total,
+        totalPages: Math.ceil(total / limitNumber),
+      },
+    };
   }
 
   // 获取酒店房型及价格信息
@@ -442,7 +464,6 @@ export class HotelsService {
 
         // 检查房型在指定日期的可用性
         let isAvailable = true; // 默认为可用
-
         if (checkInDate && checkOutDate) {
           isAvailable = await this.isRoomTypeAvailable(
             roomType.id,
