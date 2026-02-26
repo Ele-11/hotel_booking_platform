@@ -16,15 +16,25 @@
 */
 
 import { HotelStatus } from '@prisma/client';
-import { IsString, IsNumber, IsOptional, IsArray, IsDateString, Max, Min, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsDateString,
+  Max,
+  Min,
+  IsEnum,
+} from 'class-validator';
 
 export class CreateHotelDto {
   @IsString()
-  nameZh: string;
+  name: string;
 
   @IsString()
   @IsOptional()
-  nameEn?: string;
+  englishName: string;
 
   @IsString()
   address: string;
@@ -36,7 +46,7 @@ export class CreateHotelDto {
 
   @IsDateString()
   @IsOptional()
-  openingDate?: Date;
+  openingDate: string;
 
   @IsString()
   @IsOptional()
@@ -87,4 +97,18 @@ export class CreateHotelDto {
   @IsOptional()
   @IsEnum(HotelStatus)
   status?: HotelStatus;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  minPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  maxPrice?: number;
+
+  @IsArray()
+  @IsOptional()
+  roomTypes?: [];
 }

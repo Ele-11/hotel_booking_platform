@@ -1,4 +1,4 @@
-import { Layout, Menu, Popconfirm } from 'antd';
+import { Layout, Menu, Popconfirm, message } from 'antd';
 import { FC, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MenuIcon, LogoutIcon, HomeIcon } from '@/components/ui/icon';
@@ -11,10 +11,15 @@ const LayoutHotelA: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedKeys = [location.pathname];
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    message.success('已安全退出');
+    navigate('/login');
+  };
 
   const items = [
-    { label: '酒店管理', key: '/admin/list', icon: <MenuIcon /> },
     { label: '审核列表', key: '/admin/audit', icon: <HomeIcon /> },
+    { label: '酒店管理', key: '/admin/list', icon: <MenuIcon /> },
   ];
   const onMenuClick = (key: string) => {
     console.log('菜单被点击了', key);
@@ -29,12 +34,7 @@ const LayoutHotelA: FC = () => {
           <Theme />
         </div>
 
-        <Popconfirm
-          title="是否确认退出？"
-          okText="退出"
-          cancelText="取消"
-          // onConfirm={onConfirm}
-        >
+        <Popconfirm title="是否确认退出？" okText="退出" cancelText="取消" onConfirm={handleLogout}>
           <span className="flex items-center gap-1 text-heading-2 cursor-pointer hover:text-red-500 dark:hover:text-red-400 transition-colors">
             <LogoutIcon /> 退出
           </span>

@@ -73,7 +73,7 @@ export class AuthService {
       throw new BadRequestException('email 和 password 必填');
     }
 
-    const roleInput = String((registerDto as any).role ?? 'CUSTOMER').toUpperCase();
+    const roleInput = String(registerDto.role ?? 'CUSTOMER').toUpperCase();
     const role: 'ADMIN' | 'MERCHANT' | 'CUSTOMER' =
       roleInput === 'ADMIN' || roleInput === 'MERCHANT' || roleInput === 'CUSTOMER'
         ? roleInput

@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios, { AxiosError } from 'axios';
+import request from '@/utils/request';
+import { HotelStatus, PricePlan, RoomType } from '../../../../server/src/types/hotel';
 
 interface ApiErrorResponse {
   message: string;
@@ -20,33 +22,28 @@ interface CreateHotelRequest {
   contactEmail: string;
   amenities?: string[];
   images?: string[];
-  nearbyTransports?: string[];
+  nearbyTransport?: string;
   nearbyShopping?: string;
   discountInfo?: string;
-  status?: 'PENDING' | 'PUBLISHED' | 'DRAFT' | 'DISABLED';
+  status?: HotelStatus;
+  // roomTypes?: RoomType[];
+  roomTypes?: {
+    id?: string;
+    name: string;
+    pricePlans: {
+      price: number;
+      id?: string;
+      isActive: boolean;
+    }[];
+  }[];
 }
 
-interface CreatedHotel {
+interface CreatedHotel extends CreateHotelRequest {
   id: string;
-  name: string;
-  englishName?: string;
-  address: string;
-  starRating: number;
-  openingDate?: string;
-  description?: string;
-  city: string;
-  country?: string;
   latitude?: number;
   longitude?: number;
-  contactPhone: string;
-  contactEmail: string;
-  amenities?: string[];
-  images?: string[];
-  nearbyTransports?: string[];
-  nearbyShopping?: string;
-  discountInfo?: string;
-  status: 'PENDING' | 'PUBLISHED' | 'DRAFT' | 'DISABLED';
   createdAt?: string;
+  roomTypes: RoomType[];
 }
 
 interface HotelCreateState {
@@ -70,13 +67,15 @@ export const createHotel = createAsyncThunk<
 >('hotels/createHotel', async (hotelData, { rejectWithValue }) => {
   try {
     const token = localStorage.getItem('access_token');
-    const response = await axios.post<CreatedHotel>('/api/hotels', hotelData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      timeout: 5000,
+    if (!token) {
+      return rejectWithValue('未找到访问令牌，请重新登录');
+    }
+    const response = await request<CreatedHotel>({
+      url: '/api/hotels',
+      method: 'POST',
+      data: hotelData,
     });
-    return response.data;
+    return response;
   } catch (error) {
     const axiosError = error as AxiosError<ApiErrorResponse>;
     const errorMsg = axiosError.response?.data?.message || axiosError.message || '创建酒店失败';

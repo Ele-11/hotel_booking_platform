@@ -22,6 +22,7 @@ import HotelStar from '@/components/ui/HotelStar';
 import SectionTitle from '@/components/ui/SectionTitle';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createHotel, resetCreateHotelState } from '@/store/slices/hotelCreateSlice';
+import { fetchHotelList } from '@/store/slices/hotelSlice';
 type AddressValue = import('@/components/ui/AddressPicker').AddressValue;
 
 // 调整表单数据类型，适配接口参数
@@ -114,6 +115,7 @@ const AddHotel: FC = () => {
 
   // 表单提交逻辑（适配接口参数）
   const handleFormSubmit = async (values: HotelFormData) => {
+    console.log('Form values:', values);
     // 1. 验证图片上传
     const doneFiles = imageList.filter((f) => f.status === 'done');
     if (values.type > 0 && doneFiles.length !== values.type) {
@@ -127,7 +129,7 @@ const AddHotel: FC = () => {
       englishName: values.englishName || '',
       address: `${values.address.regionNames?.join('/') || ''}${values.address.detail || ''}`, // 拼接完整地址
       starRating: values.starRating,
-      openingDate: values.openingDate,
+      openingDate: dayjs(values.openingDate).toISOString(),
       contactPhone: values.contactPhone,
       contactEmail: values.contactEmail,
       description: values.description || '',
@@ -138,8 +140,9 @@ const AddHotel: FC = () => {
       images: doneFiles.map((f) => f.response?.data?.url || f.url || '').filter(Boolean),
       nearbyTransports: [],
       nearbyShopping: '',
-      status: values.status || 'DRAFT',
+      status: values.status || 'PENDING',
     };
+    console.log('Submit data:', submitData);
 
     try {
       // 3. 调用Redux创建酒店action
@@ -148,6 +151,7 @@ const AddHotel: FC = () => {
       // 4. 提交成功后重置表单
       form.resetFields();
       setImageList([]);
+      fetchHotelList();
     } catch (err) {
       // 错误已由Redux处理，这里仅做兜底提示
       message.error('酒店创建失败，请稍后重试');
@@ -187,24 +191,23 @@ const AddHotel: FC = () => {
             minPrice: 0,
             maxPrice: 9999,
             address: {},
-            starRating: 1, // 默认1星
+            starRating: 1,
           }}
         >
           <div className="space-y-6">
-            {/* 基础信息区域（新增英文名称、联系方式、描述） */}
             <SectionTitle title="基础信息" desc="用于列表与详情页展示。">
               <Row gutter={16}>
                 <Col xs={24} md={12}>
                   <Form.Item
                     label="酒店名称（中文）"
-                    name="nameZh"
+                    name="name"
                     rules={[{ required: true, message: '请输入酒店中文名称' }]}
                   >
                     <Input className="input" placeholder="例如：杭州西湖智选假日酒店" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item label="酒店名称（英文）" name="nameEn">
+                  <Form.Item label="酒店名称（英文）" name="englishName">
                     <Input
                       className="input"
                       placeholder="例如：Holiday Inn Express Hangzhou West Lake"

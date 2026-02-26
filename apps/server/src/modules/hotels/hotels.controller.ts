@@ -14,14 +14,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+<<<<<<< HEAD
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+=======
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { PrismaService } from '../../prisma/prisma.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+>>>>>>> feature/zz-merchant
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { HotelsService } from './hotels.service';
 
 @ApiTags('Hotels')
-@Controller('hotels')
+@Controller('/hotels')
 export class HotelsController {
   constructor(@Inject(HotelsService) private readonly hotelsService: HotelsService) {}
 
@@ -32,7 +38,7 @@ export class HotelsController {
   }
 
   // 创建酒店
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Post()
   @ApiOperation({ summary: '创建酒店' })
   @ApiBody({ type: CreateHotelDto })
@@ -62,18 +68,19 @@ export class HotelsController {
   }
 
   // 商户获取自己的酒店列表
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Get('my-hotels')
   @ApiOperation({ summary: '商户获取自己的酒店列表' })
+  @ApiQuery({ type: QueryHotelsDto })
   @ApiResponse({ status: 200, description: '返回商户的酒店列表' })
   @ApiResponse({ status: 401, description: '未认证' })
   @ApiResponse({ status: 403, description: '权限不足' })
-  async getUserHotels(@Req() req) {
-    return this.hotelsService.getUserHotels(this.getUserId(req));
+  async getUserHotels(@Req() req, @Query() query: QueryHotelsDto) {
+    return this.hotelsService.getUserHotels(this.getUserId(req), query);
   }
 
   // 获取待审核酒店列表
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Get('pending')
   @ApiOperation({ summary: '获取待审核酒店列表' })
   @ApiResponse({ status: 200, description: '返回待审核酒店列表' })
@@ -138,7 +145,7 @@ export class HotelsController {
   }
 
   // 更新酒店信息
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   @ApiOperation({ summary: '更新酒店信息' })
   @ApiParam({ name: 'id', description: '酒店ID' })
