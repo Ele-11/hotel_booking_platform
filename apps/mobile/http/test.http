@@ -2,4 +2,6 @@
 GET http://localhost:3001/api/hotels
 
 ### 获取单个酒店详情（需要替换为实际的酒店ID）
-GET http://localhost:3001/api/hotels/1e6ef8098-77c0-4ae9-9b33-f083b3b529f3
+GET http://localhost:3001/api/hotels/e6ef8098-77c0-4ae9-9b33-f083b3b529f3
+
+
