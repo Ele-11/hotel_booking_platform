@@ -1,18 +1,10 @@
 ### 安装所有依赖
-
 ```
 # 安装根目录依赖
 pnpm install
 
 # 安装所有子项目依赖
 pnpm install:all
-
-# 或者分别安装
-pnpm install:shared
-pnpm install:server
-pnpm install:web
-pnpm install:mobile
-```
 
 
 
