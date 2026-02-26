@@ -156,8 +156,11 @@ const HotelListScreen = ({ route, navigation }: Props) => {
                 setFeatureOptions(featureRes.data.data.options);
 
                 // 设置默认排序和位置
-                const defaultSort = sortRes.data.data.options[0]?.value || '';
-                const defaultLoc = locRes.data.data.options[0]?.value || '';
+                const defaultSort = sortRes.data.data.options[0]?.value || 'popular';
+                // 设置默认位置为"不限"（通常是第一个选项）
+                const defaultLoc = locRes.data.data.options.find((opt: any) => opt.label === '不限')?.value ||
+                    locRes.data.data.options[0]?.value || 'all';
+                console.log('Setting default filters:', { defaultSort, defaultLoc });
                 setSelectedSort(defaultSort);
                 setSelectedLocation(defaultLoc);
                 setTempSort(defaultSort);
@@ -190,12 +193,15 @@ const HotelListScreen = ({ route, navigation }: Props) => {
                 setTempFeatures(initialFeatures);
 
                 // 立即应用筛选，触发数据加载
-                setAppliedFilters({
+                // 如果没有初始价格和房型，则不设置这些筛选条件
+                const newFilters = {
                     sort: defaultSort,
                     location: defaultLoc,
-                    priceRanges: initialPriceRanges,
-                    features: initialFeatures
-                });
+                    priceRanges: initialPriceRanges.length > 0 ? initialPriceRanges : [],
+                    features: initialFeatures.length > 0 ? initialFeatures : []
+                };
+                console.log('Applying initial filters:', newFilters);
+                setAppliedFilters(newFilters);
 
             } catch (error) {
                 console.error('加载筛选选项失败', error);
@@ -249,13 +255,12 @@ const HotelListScreen = ({ route, navigation }: Props) => {
 
     // 当 appliedFilters 变化时，重新加载数据（包括初始加载）
     useEffect(() => {
-        // 确保 appliedFilters 有值（避免空字符串触发无效请求）
-        if (appliedFilters.sort && appliedFilters.location) {
-            setHotels([]);
-            setPage(1);
-            setHasMore(true);
-            loadHotels(1, true);
-        }
+        // 确保至少有基本的筛选条件，但不要过于严格
+        // 即使没有筛选条件也要加载数据
+        setHotels([]);
+        setPage(1);
+        setHasMore(true);
+        loadHotels(1, true);
     }, [appliedFilters]);
 
     // 下拉刷新

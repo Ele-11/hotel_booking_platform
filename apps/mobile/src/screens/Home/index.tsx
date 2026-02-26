@@ -42,9 +42,9 @@ const FILTER_DATA = {
         { label: '不限', value: '' },
         { label: '￥0-150', value: '0-150' },
         { label: '￥150-300', value: '150-300' },
-        { label: '￥300-600', value: '300-600' },
-        { label: '￥600-1000', value: '600-1000' },
-        { label: '￥1000以上', value: '1000-99999' }
+        { label: '￥300-650', value: '300-650' },
+        // { label: '￥600-1000', value: '600-1000' },
+        { label: '￥650以上', value: '650-99999' }
     ],
     roomTypes: [
         { label: '不限', value: '' },
@@ -56,43 +56,37 @@ const FILTER_DATA = {
     ]
 };
 
-// const BANNERS = [
-//     { id: '1', title: '春季特惠：三亚海景房 5 折起', uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800' },
-//     { id: '2', title: '深山避暑：莫干山精品民宿', uri: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800' },
-//     { id: '3', title: '魔都之夜：上海外滩景观房', uri: 'https://images.unsplash.com/photo-1506059612708-99d6c258160e?w=800' },
-//     { id: '4', title: '古城韵味：大理洱海阳光房', uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800' },
-//     { id: '5', title: '亲子时光：长隆主题酒店', uri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800' },
-// ];
+
 
 const BANNERS = [
     {
-        id: '1',
-        hotelName: '三亚海景度假酒店',
-        title: '春季特惠：三亚海景房 5 折起',
+        id: 'e6ef8098-77c0-4ae9-9b33-f083b3b529f3',
+        hotelName: '北京国贸大酒店',
+        title: '商务首选：北京国贸CBD核心区',
         uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
     },
     {
-        id: '2',
-        hotelName: '莫干山精品民宿',
-        title: '深山避暑：莫干山精品民宿',
+        id: '5a70597a-ec95-426f-b336-f7fa0f138bb6',
+        hotelName: '上海外滩华尔道夫酒店',
+        title: '奢华体验：上海外滩江景房',
         uri: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'
     },
     {
-        id: '3',
-        hotelName: '上海外滩景观酒店',
-        title: '魔都之夜：上海外滩景观房',
+        id: 'cd04a5cd-f495-4d3f-b020-96bc2a6a88f6',
+        hotelName: '北京王府井希尔顿酒店',
+        title: '文化之旅：毗邻故宫天安门',
         uri: 'https://images.unsplash.com/photo-1506059612708-99d6c258160e?w=800'
     },
     {
-        id: '4',
-        hotelName: '大理洱海阳光客栈',
-        title: '古城韵味：大理洱海阳光房',
+        id: '807e4b12-b051-42ee-a36d-ac285e831e35',
+        hotelName: '三亚亚特兰蒂斯度假酒店',
+        title: '家庭度假：海棠湾水世界',
         uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800'
     },
     {
-        id: '5',
-        hotelName: '广州长隆主题酒店',
-        title: '亲子时光：长隆主题酒店',
+        id: '226fa19b-c06e-43fc-b83b-1059aabebe2f',
+        hotelName: '成都宽窄巷子精品酒店',
+        title: '古韵新风：宽窄巷子旁',
         uri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'
     },
 ];
@@ -107,8 +101,8 @@ const HomeScreen = ({ navigation }: Props) => {
     const [isLoading, setIsLoading] = useState(false);
 
     // 搜索表单状态
-    const [province, setProvince] = useState('广东省');
-    const [city, setCity] = useState('珠海市');
+    const [province, setProvince] = useState('不限');
+    const [city, setCity] = useState('不限');
     const [price, setPrice] = useState('￥150-300');
     const [roomType, setRoomType] = useState('大床房');
     const [searchKeyWordValue, setSearchKeyWordValue] = useState('');

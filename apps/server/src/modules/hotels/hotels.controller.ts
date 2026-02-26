@@ -1,21 +1,20 @@
 import {
+  Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
+  Inject,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
-  UseGuards,
   Req,
-  Inject,
   UnauthorizedException,
-  ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { PrismaService } from '../../prisma/prisma.service';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
@@ -51,6 +50,15 @@ export class HotelsController {
   @ApiResponse({ status: 200, description: '返回酒店列表' })
   async findAll(@Query() query: QueryHotelsDto) {
     return this.hotelsService.findAll(query);
+  }
+
+  // 获取酒店列表（兼容前端API调用）
+  @Get('list')
+  @ApiOperation({ summary: '获取酒店列表（前端专用）' })
+  @ApiQuery({ type: QueryHotelsDto })
+  @ApiResponse({ status: 200, description: '返回酒店列表' })
+  async findList(@Query() query: QueryHotelsDto) {
+    return this.hotelsService.findList(query);
   }
 
   // 商户获取自己的酒店列表

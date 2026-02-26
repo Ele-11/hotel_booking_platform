@@ -31,10 +31,25 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
 
   // CORS配置
-  app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL', 'http://localhost:5173'),
-    credentials: true,
-  });
+  // 仅在开发环境中使用更宽松的CORS配置
+  if (process.env.NODE_ENV === 'development') {
+    app.enableCors({
+      origin: true, // 允许所有来源
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'User-Agent'],
+    });
+  } else {
+    // 生产环境使用更严格的CORS配置
+    app.enableCors({
+      origin: [
+        configService.get<string>('FRONTEND_URL', 'https://your-production-domain.com'),
+      ],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'User-Agent'],
+    });
+  }
 
   // Swagger配置
   const config = new DocumentBuilder()

@@ -4,11 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-<<<<<<< HEAD
   // url      = env("DATABASE_URL")  //  这个需要我们本地配置好 在 .env.example 中
-=======
-  url      = env("DATABASE_URL")
->>>>>>> 165f9c0f7b184d6f403c68eb3f3346b03caf3b53
 }
 
 model User {

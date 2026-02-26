@@ -1,6 +1,8 @@
+import type { IHotel } from '@hotel-booking-platform/shared-types/src/domain/hotel';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     Animated,
     Dimensions,
     FlatList,
@@ -12,9 +14,12 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { fetchHotelDetail, fetchHotelRoomTypes, RoomType } from '../../api/hotel';
 import Calendar_My from '../../components/Calendar_My';
 import { RootStackParamList } from '../../navigation/types';
 import { styles } from './index.styles';
+
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HotelDetail'>;
 
@@ -25,6 +30,12 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
     const { hotelId, hotelName } = route.params;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const scrollY = useRef(new Animated.Value(0)).current;
+
+    // 数据加载状态
+    const [loading, setLoading] = useState(true);
+    const [hotel, setHotel] = useState<IHotel | null>(null);
+    const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
     // 日历相关状态
     const [calendarVisible, setCalendarVisible] = useState(false);
@@ -50,42 +61,103 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
         };
     });
 
-    // 模拟酒店图片数据
-    const hotelImages = [
+    // 获取酒店详情和房型数据
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                // 获取酒店详情
+                console.log('正在获取酒店详情, hotelId:', hotelId);
+                const hotelResponse = await fetchHotelDetail(hotelId);
+                console.log('酒店详情API响应:', hotelResponse);
+
+                if (!hotelResponse || !hotelResponse.data || !hotelResponse.data.data) {
+                    throw new Error('酒店详情API响应格式不正确');
+                }
+
+                const hotelData = hotelResponse.data.data;
+                setHotel(hotelData);
+
+                // 获取房型信息
+                console.log('正在获取房型信息');
+                const roomTypesResponse = await fetchHotelRoomTypes(hotelId, {
+                    checkInDate: dateInfo.startStr,
+                    checkOutDate: dateInfo.endStr,
+                    guests: 2
+                });
+
+                // 添加错误处理和日志
+                console.log('房型API响应:', roomTypesResponse);
+
+                if (roomTypesResponse && roomTypesResponse.data && roomTypesResponse.data.data && roomTypesResponse.data.data.roomTypes) {
+                    setRoomTypes(roomTypesResponse.data.data.roomTypes);
+                } else {
+                    console.error('房型API响应格式不正确:', roomTypesResponse);
+                    setRoomTypes([]); // 设置为空数组，避免后续错误
+                }
+            } catch (err: any) {
+                console.error('获取酒店信息失败:', err);
+                if (err.response) {
+                    // 服务器返回了错误响应
+                    console.error('错误状态码:', err.response.status);
+                    console.error('错误数据:', err.response.data);
+
+                    if (err.response.status === 404) {
+                        setError('酒店信息不存在');
+                    } else {
+                        setError(`获取酒店信息失败: ${err.response.data?.message || '未知错误'}`);
+                    }
+                } else if (err.request) {
+                    // 请求已发出但没有收到响应
+                    setError('网络错误，请检查网络连接');
+                } else {
+                    // 其他错误
+                    setError(`获取酒店信息失败: ${err.message || '未知错误'}`);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [hotelId, dateInfo.startStr, dateInfo.endStr]);
+
+    // 酒店图片数据
+    const hotelImages = hotel?.images || [
         'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80',
-
     ];
 
-    // 模拟房型数据
-    const roomTypes = [
-        {
-            id: '1',
-            name: '经典双床房',
-            price: 198,
-            specs: '2张1.2米单人床 40㎡',
-            img: 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=800&q=80'
+    // 处理房型数据，用于渲染
+    const sortedRooms = useMemo(() => {
+        if (!roomTypes || roomTypes.length === 0) {
+            return [];
+        }
 
-        },
-        {
-            id: '2',
-            name: '豪华大床房',
-            price: 688,
-            specs: '1张1.8米大床 45㎡',
-            img: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80'
+        return roomTypes.map(room => {
+            // 处理价格，优先使用currentPrice，其次是pricePlans[0].price，最后是basePrice
+            const price = room.basePrice ||
+                (room.pricePlans && room.pricePlans.length > 0 ? room.pricePlans[0].price : 0) ||
+                room.basePrice || 0;
 
-        },
-        {
-            id: '3',
-            name: '行政套房',
-            price: 2888,
-            specs: '1张2.0米特大床 80㎡',
-            img: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80'
-        },
-    ];
+            // 处理 amenities，确保是数组
+            const amenities = room.amenities || [];
 
-    const sortedRooms = useMemo(() => [...roomTypes].sort((a, b) => a.price - b.price), []);
+            // 处理 images，确保是数组
+            const images = room.images || [];
+
+            return {
+                id: room.id,
+                name: room.name,
+                price: price,
+                specs: `最多入住${room.maxGuests || 2}人 ${amenities.slice(0, 2).join('、')}`,
+                img: images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=800&q=80'
+            };
+        }).sort((a, b) => a.price - b.price);
+    }, [roomTypes]);
 
     // 动画插值
     const headerBackgroundColor = scrollY.interpolate({
@@ -123,6 +195,28 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
         }
     };
 
+    // 加载中状态
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0066CC" />
+                <Text style={styles.loadingText}>加载中...</Text>
+            </View>
+        );
+    }
+
+    // 错误状态
+    if (error || !hotel) {
+        return (
+            <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error || '酒店信息不存在'}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
+                    <Text style={styles.retryButtonText}>返回</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -140,7 +234,7 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
                     style={[styles.headerTitle, { opacity: titleOpacity, color: '#333' }]}
                     numberOfLines={1}
                 >
-                    {hotelName}
+                    {hotel.name || hotelName}
                 </Animated.Text>
                 <View style={styles.headerRight} />
             </Animated.View>
@@ -166,7 +260,7 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
                     />
                     {/* 图片指示器 */}
                     <View style={styles.indicatorContainer}>
-                        {hotelImages.map((_, index) => (
+                        {hotelImages.map((_, index: number) => (
                             <View
                                 key={index}
                                 style={[
@@ -181,7 +275,7 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
                 {/* 酒店基础信息卡片 */}
                 <View style={styles.card}>
                     <View style={styles.hotelHeader}>
-                        <Text style={styles.hotelName}>{hotelName}</Text>
+                        <Text style={styles.hotelName}>{hotel.name || hotelName}</Text>
                         <View style={styles.badge}>
                             <Text style={styles.badgeText}>口碑榜</Text>
                             <Text style={styles.badgeText}>上榜酒店</Text>
@@ -202,17 +296,26 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
 
                     {/* 设施简述 */}
                     <View style={styles.facilityContainer}>
-                        {[
-                            { n: '2025年开业', i: '🏢' },
-                            { n: '新中式风', i: '🏮' },
-                            { n: '免费停车', i: '🅿️' },
-                            { n: '设施政策', i: '➡️' },
-                        ].map((item, idx) => (
-                            <View key={idx} style={styles.facilityItem}>
-                                <Text style={styles.facilityIcon}>{item.i}</Text>
-                                <Text style={styles.facilityName}>{item.n}</Text>
-                            </View>
-                        ))}
+                        {hotel.tags && hotel.tags.length > 0 ? (
+                            hotel.tags.slice(0, 4).map((tag: string, idx: number) => (
+                                <View key={idx} style={styles.facilityItem}>
+                                    <Text style={styles.facilityIcon}>🏨</Text>
+                                    <Text style={styles.facilityName}>{tag}</Text>
+                                </View>
+                            ))
+                        ) : (
+                            [
+                                { n: '2025年开业', i: '🏢' },
+                                { n: '新中式风', i: '🏮' },
+                                { n: '免费停车', i: '🅿️' },
+                                { n: '设施政策', i: '➡️' },
+                            ].map((item, idx) => (
+                                <View key={idx} style={styles.facilityItem}>
+                                    <Text style={styles.facilityIcon}>{item.i}</Text>
+                                    <Text style={styles.facilityName}>{item.n}</Text>
+                                </View>
+                            ))
+                        )}
                     </View>
 
                     {/* 评分和地址 */}
@@ -231,7 +334,7 @@ const HotelDetailScreen = ({ route, navigation }: Props) => {
                     <View style={styles.addressRow}>
                         <View style={styles.addressContent}>
                             <Text style={styles.distanceText}>距塘桥地铁站步行1.5公里,约22分钟</Text>
-                            <Text style={styles.addressText}>浦东新区浦明路868弄3号楼</Text>
+                            <Text style={styles.addressText}>{hotel.address || '浦东新区浦明路868弄3号楼'}</Text>
                         </View>
                         <View style={styles.mapBtn}>
                             <Text style={styles.mapIcon}>📍</Text>

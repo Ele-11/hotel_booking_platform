@@ -1,11 +1,11 @@
 import {
+  BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
-  BadRequestException,
-  Inject,
 } from '@nestjs/common';
-import { Hotel, User, UserRole, HotelStatus, Prisma } from '@prisma/client';
+import { HotelStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { QueryHotelsDto } from './dto/query-hotels.dto';
@@ -43,6 +43,23 @@ export class HotelsService {
     });
   }
 
+  // 获取酒店列表（前端专用）
+  async findList(query: QueryHotelsDto) {
+    const result = await this.findAll(query);
+    
+    // 转换为前端期望的格式
+    return {
+      message: 'success',
+      data: {
+        list: result.data,
+        total: result.meta.total,
+        page: result.meta.page,
+        pageSize: result.meta.limit,
+        hasMore: result.meta.page < result.meta.totalPages,
+      },
+    };
+  }
+
   // 获取酒店列表
   async findAll(query: QueryHotelsDto) {
     const {
@@ -62,10 +79,17 @@ export class HotelsService {
 
     const skip = (Number(page) - 1) * Number(limit);
 
+    // 在开发环境中，允许查询所有状态的酒店（除了已删除的）
+    // 在生产环境中，只查询已发布的酒店
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     const where: Record<string, unknown> = {
-      status: HotelStatus.PUBLISHED,
+      ...(isDevelopment ? {} : { status: HotelStatus.PUBLISHED }),
       deletedAt: null,
     };
+    
+    // 如果只有城市参数，确保能返回数据
+    console.log('查询条件:', { city, keyword, isDevelopment });
 
     if (keyword) {
       where.OR = [
@@ -131,6 +155,7 @@ export class HotelsService {
     console.log('价格筛选参数:', { minPrice, maxPrice });
     console.log('房型筛选条件:', roomTypeConditions);
     console.log('完整查询条件:', JSON.stringify(where, null, 2));
+    console.log('查询参数:', { skip, take: Number(limit), sortBy, sortOrder });
 
     const [data, total] = await Promise.all([
       this.prisma.hotel.findMany({
@@ -221,7 +246,22 @@ export class HotelsService {
       throw new NotFoundException('Hotel not found');
     }
 
-    return hotel;
+    // 转换价格从分到元
+    const hotelWithConvertedPrices = {
+      ...hotel,
+      roomTypes: hotel.roomTypes.map(roomType => ({
+        ...roomType,
+        pricePlans: roomType.pricePlans.map(plan => ({
+          ...plan,
+          price: plan.price / 100, // 将分转换为元
+        })),
+      })),
+    };
+
+    return {
+      message: 'success',
+      data: hotelWithConvertedPrices,
+    };
   }
 
   // 更新酒店信息
@@ -509,9 +549,12 @@ export class HotelsService {
     );
 
     return {
-      hotelId: hotel.id,
-      hotelName: hotel.name,
-      roomTypes: roomTypesWithPrices,
+      message: 'success',
+      data: {
+        hotelId: hotel.id,
+        hotelName: hotel.name,
+        roomTypes: roomTypesWithPrices,
+      },
     };
   }
 

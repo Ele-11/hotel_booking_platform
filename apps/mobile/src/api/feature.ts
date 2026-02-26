@@ -1,5 +1,5 @@
 // api/feature.ts
-import   http   from '../utils/http';
+import http from '../utils/http';
 import type { ResType } from './shared';
 
 export type FeatureOption = {
@@ -13,7 +13,7 @@ type FeatureRes = {
 
 export function fetchFeatureOptions() {
     return http.request<ResType<FeatureRes>>({
-        url: '/feature/options',
+        url: '/options/feature',
         method: 'GET',
     });
 }

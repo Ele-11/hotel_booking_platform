@@ -48,7 +48,8 @@ const http = axios.create({
 http.interceptors.request.use((config) => {
   // 开发环境启用 Mock
   if (__DEV__) { // React Native 中 __DEV__ 表示开发环境
-    // 根据 URL 返回模拟数据（通过 Promise.reject 或修改 config.adapter）
+    // 记录请求参数，便于调试
+    console.log('Mock Request:', config.url, config.params);
     return config;
   }
   return config;
@@ -56,28 +57,57 @@ http.interceptors.request.use((config) => {
 
 // 添加响应拦截器（处理 Mock）
 http.interceptors.response.use(
-  (response) => response,
+  (response: any) => {
+    // 在开发环境中，始终使用Mock数据
+    if (__DEV__) {
+      const url = response.config.url;
+      
+      if (url.includes('/options/sort')) {
+        console.log('Using mock data for sort options');
+        return { data: mockSortOptions, status: 200 };
+      } else if (url.includes('/options/location')) {
+        console.log('Using mock data for location options');
+        return { data: mockLocationOptions, status: 200 };
+      } else if (url.includes('/options/price')) {
+        console.log('Using mock data for price options');
+        return { data: mockPriceOptions, status: 200 };
+      } else if (url.includes('/options/feature')) {
+        console.log('Using mock data for feature options');
+        return { data: mockFeatureOptions, status: 200 };
+      } else if (url.includes('/hotels/list')) {
+        // 解析请求参数
+        const params = response.config.params || {};
+        console.log('Using mock data for hotels with params:', params);
+        return { data: mockHotelList(params), status: 200 };
+      }
+    }
+    return response;
+  },
   (error) => {
     // 如果是因为网络错误且处于开发环境，尝试返回 Mock 数据
-    if (__DEV__ && error.message === 'Network Error') {
-      const url = error.config.url;
-      const method = error.config.method;
+    if (__DEV__) {
+      const url = error.config?.url;
       
       // 模拟延迟
       return new Promise((resolve) => {
         setTimeout(() => {
           let mockResponse;
-          if (url.includes('/sort/options')) {
+          if (url?.includes('/options/sort')) {
+            console.log('Network error, using mock data for sort options');
             mockResponse = { data: mockSortOptions, status: 200 };
-          } else if (url.includes('/location/options')) {
+          } else if (url?.includes('/options/location')) {
+            console.log('Network error, using mock data for location options');
             mockResponse = { data: mockLocationOptions, status: 200 };
-          } else if (url.includes('/price/options')) {
+          } else if (url?.includes('/options/price')) {
+            console.log('Network error, using mock data for price options');
             mockResponse = { data: mockPriceOptions, status: 200 };
-          } else if (url.includes('/feature/options')) {
+          } else if (url?.includes('/options/feature')) {
+            console.log('Network error, using mock data for feature options');
             mockResponse = { data: mockFeatureOptions, status: 200 };
-          } else if (url.includes('/hotels/list')) {
+          } else if (url?.includes('/hotels/list')) {
             // 解析请求参数
-            const params = error.config.params || {};
+            const params = error.config?.params || {};
+            console.log('Network error, using mock data for hotels with params:', params);
             mockResponse = { data: mockHotelList(params), status: 200 };
           }
           if (mockResponse) {

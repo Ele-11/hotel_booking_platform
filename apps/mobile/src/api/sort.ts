@@ -16,7 +16,7 @@ type SortRes = {
 // 获取排序选项
 export function fetchSortOptions() {
     return http.request<ResType<SortRes>>({
-        url: '/sort/options', // 假设的接口地址
+        url: '/options/sort', // 修改为实际的接口地址
         method: 'GET',
     });
 }

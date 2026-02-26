@@ -1,5 +1,5 @@
 // api/location.ts
-import  http  from '../utils/http';
+import http from '../utils/http';
 import type { ResType } from './shared';
 
 export type LocationOption = {
@@ -13,7 +13,7 @@ type LocationRes = {
 
 export function fetchLocationOptions() {
     return http.request<ResType<LocationRes>>({
-        url: '/location/options',
+        url: '/options/location',
         method: 'GET',
     });
 }

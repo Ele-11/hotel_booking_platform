@@ -13,7 +13,7 @@ type PriceRes = {
 
 export function fetchPriceOptions() {
     return http.request<ResType<PriceRes>>({
-        url: '/price/options',
+        url: '/options/price',
         method: 'GET',
     });
 }
